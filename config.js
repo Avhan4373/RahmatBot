@@ -12,6 +12,20 @@ export const config = {
   usePairingCode: (process.env.USE_PAIRING_CODE || 'true') === 'true',
   qrisImage: process.env.QRIS_IMAGE || './assets/qris.png',
   qrisLabel: process.env.QRIS_LABEL || 'QRIS Statis',
+
+  // ==== Fitur grup ====
+  // Bot aktif di grup mana pun ia diundang (default). Set false untuk matikan total.
+  groupEnabled: (process.env.GROUP_ENABLED || 'true') === 'true',
+  // Di grup, bot hanya merespons bila di-tag/mention, diawali prefix, atau
+  // menjawab pesan bot (reply). Prefix default: titik.
+  groupPrefix: process.env.GROUP_PREFIX || '.',
+  // Whitelist ID grup (kosong = semua grup). Contoh: 1203630xxxx@g.us,1203631yyyy@g.us
+  groupWhitelist: (process.env.GROUP_WHITELIST || '')
+    .split(',').map(s => s.trim()).filter(Boolean),
+  // Sambutan otomatis member baru masuk / pamit saat keluar.
+  groupWelcome: (process.env.GROUP_WELCOME || 'true') === 'true',
+  // Template sambutan kustom (opsional). Placeholder: {{member}} {{group}} {{bot}}
+  groupWelcomeText: process.env.GROUP_WELCOME_TEXT || '',
 };
 
 export const toJid = (num62) => `${num62}@s.whatsapp.net`;

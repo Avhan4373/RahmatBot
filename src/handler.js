@@ -12,6 +12,11 @@ import {
 import { sendInvoice, forwardProofToAdmins } from './qris.js';
 import { handleAdminCommand } from './admin.js';
 import { sendList, sendQuickReplies } from './lists.js';
+import {
+  groupAllowed, isBotMentioned, isReplyToBot, isInteractiveResponse, stripMentions,
+  stripGroupPrefix, groupMainMenuText, groupCatalogText, groupProductText,
+  groupRedirectText, groupHelp,
+} from './group.js';
 
 const norm = (s = '') => s.trim();
 const lower = (s = '') => s.trim().toLowerCase();
@@ -42,7 +47,7 @@ export async function handleMessage(sock, m) {
   const msg = m.messages?.[0];
   if (!msg || msg.key.fromMe) return;
   const from = msg.key.remoteJid;
-  if (!from || from.endsWith('@g.us')) return; // abaikan grup
+  if (!from) return;
   if (from === 'status@broadcast') return;
 
   const reply = (text, extra = {}) => sock.sendMessage(from, { text, ...extra }, { quoted: msg });
@@ -78,6 +83,14 @@ export async function handleMessage(sock, m) {
   text = norm(text);
 
   learnFromMessage(msg); // ingat pasangan nomor <-> @lid untuk balasan/forward
+
+  // ===== 0) PESAN GRUP =====
+  // Bot hanya merespons bila di-tag, diawali prefix, menjawab pesan bot, atau
+  // hasil klik tombol. Order tetap diarahkan ke chat pribadi.
+  if (from.endsWith('@g.us')) {
+    return handleGroupMessage(sock, msg, { from, content, text, reply });
+  }
+
   const admin = isAdminJid(from, msg.key, config.adminNumbers);
   const hasImage = !!content.imageMessage;
 
@@ -237,4 +250,65 @@ async function addToCart(sock, from, reply, quoted, productId, qty = 1) {
   setCart(from, items);
   await reply(`✅ *${p.name}* x${qty} masuk keranjang!\n\n${cartText(from)}`);
   await sendMenuPoll(sock, from, cartActionList(), quoted);
+}
+
+// ===== Alur khusus GRUP =====
+// Aturan: bot hanya aktif bila di-tag, diawali prefix, menjawab pesan bot, atau
+// hasil klik tombol/list. PENTING: WhatsApp tidak mendukung tombol/list di grup,
+// jadi SEMUA balasan grup memakai TEKS BIASA. Order diarahkan ke chat pribadi.
+async function handleGroupMessage(sock, msg, { from, content, text, reply }) {
+  if (!groupAllowed(from)) return;
+
+  const interactive = isInteractiveResponse(content);
+  const mentioned = isBotMentioned(sock, content);
+  const replied = isReplyToBot(sock, content);
+  const prefixed = stripGroupPrefix(text);
+
+  // Tanpa pemicu apa pun → diam (tidak spam grup).
+  if (!interactive && !mentioned && !replied && prefixed === null) return;
+
+  // Bersihkan token mention, lalu buang prefix bila masih ada (mis. "@bot .menu").
+  let body = stripMentions(prefixed === null ? text : prefixed, content).trim();
+  const afterMention = stripGroupPrefix(body);
+  if (afterMention !== null) body = afterMention;
+  // Bila dipicu oleh mention/reply tanpa kata kunci → anggap minta menu.
+  if (!body) body = 'menu';
+  const t = lower(body);
+
+  // Perintah admin TIDAK dijalankan di grup (hanya DM). Hanya perintah yang
+  // benar-benar eksklusif admin (bukan alias katalog/menu grup).
+  const firstWord = (body.split(/\s+/)[0] || '').toLowerCase();
+  const ADMIN_ONLY = ['acc', 'tolak', 'stok', 'kirim'];
+  if (body.startsWith('/') || ADMIN_ONLY.includes(firstWord)) {
+    return reply('⛔ Perintah admin hanya berlaku di chat pribadi ya.');
+  }
+
+  // Sapaan / menu
+  if (['halo', 'hallo', 'hai', 'hi', 'p', 'assalamualaikum', 'menu', 'start', 'mulai', '0', 'help', 'bantuan', '?', 'allmenu'].includes(t)) {
+    return reply(groupMainMenuText(config.botName));
+  }
+  if (['katalog', 'katalog produk', 'produk', 'pricelist', 'listproduk', '1'].includes(t)) {
+    const ps = getProducts().filter(p => p.active !== false);
+    if (!ps.length) return reply('📭 Katalog masih kosong. Coba lagi nanti ya.');
+    return reply(groupCatalogText());
+  }
+  if (['caraorder', 'cara order', 'cara pesan', 'order', 'beli', 'checkout', 'bayar', 'keranjang', 'cart', 'status', '2', '3', '4'].includes(t)) {
+    return reply(groupRedirectText());
+  }
+
+  // Detail produk: "detail P01" / "P01"
+  let mDetail = /^(?:#?detail|info|lihat)\s+(P\d+)/i.exec(body);
+  if (mDetail) {
+    const p = findProduct(mDetail[1]);
+    if (!p) return reply(`❌ Produk ${mDetail[1]} tidak ditemukan. Ketik *katalog*.`);
+    return reply(groupProductText(p.id));
+  }
+  if (/^P\d+$/i.test(body)) {
+    const p = findProduct(body.toUpperCase());
+    if (!p) return reply('❌ Produk tidak ditemukan. Ketik *katalog*.');
+    return reply(groupProductText(p.id));
+  }
+
+  // Fallback di grup: arahkan ke menu/chat pribadi (jangan bising).
+  return reply(groupHelp(config.botName));
 }

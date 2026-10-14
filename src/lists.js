@@ -29,6 +29,8 @@ const listBizNode = {
 };
 const nodesFor = (jid, kind) => {
   const nodes = [kind === 'list' ? listBizNode : nativeFlowBizNode];
+  // Node `bot` hanya untuk chat pribadi. Tombol/list tidak didukung di grup
+  // (server menolak error 479), jadi grup memakai teks biasa — lihat group.js.
   if (isPrivateChat(jid)) nodes.push(botNode);
   return nodes;
 };

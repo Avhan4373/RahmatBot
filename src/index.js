@@ -9,9 +9,20 @@ import qrcode from 'qrcode-terminal';
 import fs from 'fs';
 import { config } from '../config.js';
 import { handleMessage } from './handler.js';
+import { handleGroupParticipants } from './group.js';
 
 const logger = pino({ level: 'warn' });
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// libsignal (dipakai Baileys) mencetak "Closing session: {…}" yang sangat panjang
+// via console.info setiap kali sesi grup ditutup. Tidak berbahaya, tapi membanjiri
+// terminal. Kita saring khusus baris ini (log kita sendiri pakai console.log).
+const _origInfo = console.info.bind(console);
+console.info = (...args) => {
+  const first = args[0];
+  if (typeof first === 'string' && first.startsWith('Closing session')) return;
+  _origInfo(...args);
+};
 
 // Log aktivitas ke console + bot.log (untuk diagnosa: pesan masuk, balasan, error)
 export function logLine(...args) {
@@ -24,12 +35,18 @@ async function start() {
   const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
   const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 0] }));
 
+  // Cache metadata grup: WAJIB untuk kirim ke grup agar tidak request ulang tiap
+  // pesan (mencegah timeout/rate-limit). Diperbarui dari event grup di bawah.
+  const groupCache = new Map();
+  const cacheSet = (id, meta) => { if (id && meta) groupCache.set(id, meta); };
+
   const sock = makeWASocket({
     version,
     auth: state,
     logger,
     printQRInTerminal: !config.usePairingCode,
     browser: [config.botName, 'Chrome', '1.0'],
+    cachedGroupMetadata: async (jid) => groupCache.get(jid),
   });
 
   // Sadap pengiriman pesan untuk log diagnosa (tipe pesan keluar tercatat di bot.log)
@@ -119,6 +136,34 @@ async function start() {
       }
     }
   });
+
+  // ===== Sambutan member baru masuk / pamit keluar (khusus grup) =====
+  sock.ev.on('group-participants.update', async (ev) => {
+    try {
+      await handleGroupParticipants(sock, ev);
+      // Segarkan cache metadata grup agar pengiriman berikutnya lancar.
+      if (ev?.id) {
+        sock.groupMetadata(ev.id).then((m) => cacheSet(ev.id, m)).catch(() => {});
+      }
+    } catch (e) {
+      logLine('[GROUP EVENT ERROR]', e?.stack || e?.message || e);
+    }
+  });
+
+  // ===== Jaga cache metadata grup tetap hangat (untuk kirim ke grup) =====
+  sock.ev.on('groups.upsert', (groups) => {
+    for (const g of groups || []) cacheSet(g?.id, g);
+  });
+  sock.ev.on('groups.update', async (updates) => {
+    for (const u of updates || []) {
+      if (!u?.id) continue;
+      try { cacheSet(u.id, await sock.groupMetadata(u.id)); } catch {}
+    }
+  });
+  // Isi cache awal untuk semua grup yang diikuti bot.
+  sock.groupFetchAllParticipating?.()
+    .then((all) => { for (const g of Object.values(all || {})) cacheSet(g?.id, g); })
+    .catch(() => {});
 
   // jauhkan auto-read agar centang biru tidak otomatis (opsional): biarkan default
 }

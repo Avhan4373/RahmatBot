@@ -13,6 +13,11 @@ Baileys (Node.js), pembayaran QRIS statis, verifikasi bukti manual oleh admin.
 - Bukti otomatis diteruskan ke admin → admin `/acc` / `/tolak`.
 - Setelah ACC → status lunas + barang digital terkirim otomatis (akun/kode dari stok).
 - Admin: notifikasi order, kelola menu, kelola stok, lihat order.
+- **Aktif di grup**: bot bisa diundang ke grup untuk pamer katalog. Di grup bot hanya
+  merespons saat di-@mention, pesan diawali prefix (default `.`), menjawab pesan bot,
+  atau saat tombol diklik. Karena WA tidak mendukung tombol di grup, balasan grup
+  memakai teks biasa. Order (keranjang/QRIS/bukti) diarahkan ke chat pribadi.
+  Sambutan otomatis member baru masuk/pamit keluar (bisa dimatikan).
 
 ## Alur order
 ```
@@ -61,6 +66,33 @@ USE_PAIRING_CODE=true
 - `bantuan` → bantuan
 - Kirim FOTO tanpa caption saat punya order menunggu bayar = bukti bayar.
 
+## Fitur grup
+Bot dapat diundang ke grup untuk menampilkan katalog. Aturan:
+
+- Bot **hanya merespons** bila: di-@mention, pesan diawali prefix (`GROUP_PREFIX`,
+  default `.`; `/` juga diterima), menjawab (reply) pesan bot, atau menekan tombol
+  bot (bila ada).
+- Perintah grup: `.menu` / tag bot → menu grup; `.katalog` → daftar produk;
+  `.detail P01` → detail; `.caraorder` → panduan order.
+- ⚠️ **WhatsApp tidak mendukung tombol/list interaktif di chat grup** (server
+  menolak stanza dengan error `479`/`smax-invalid`). Karena itu semua balasan di
+  grup memakai **teks biasa**. (Referensi SC UMKM pun menolak `menu` di grup dan
+  menyuruh buka chat pribadi.)
+- **Order tetap di chat pribadi** (keranjang, QRIS, bukti bayar). Di grup hanya
+  katalog + arahan. Perintah admin (`/acc`, `/menu`, `/stok`, ...) tidak jalan di grup.
+- Sambutan otomatis member baru masuk + pamit keluar (matikan: `GROUP_WELCOME=false`).
+- Metadata grup di-cache (`cachedGroupMetadata`) agar pengiriman ke grup tidak
+  timeout/kena rate-limit.
+
+Konfigurasi grup di `.env`:
+```
+GROUP_ENABLED=true          # matikan total dengan false
+GROUP_PREFIX=.              # prefix perintah di grup ("/" selalu diterima juga)
+GROUP_WHITELIST=            # kosong = semua grup; isi ID @g.us untuk membatasi
+GROUP_WELCOME=true          # sambutan member baru/keluar
+GROUP_WELCOME_TEXT=         # opsional: {{member}} {{group}} {{bot}}
+```
+
 ## Perintah admin (hanya nomor di ADMIN_NUMBERS)
 - `/acc ORDER-XXXX` → konfirmasi lunas + kirim produk otomatis
 - `/tolak ORDER-XXXX alasan` → tolak bukti
@@ -83,8 +115,9 @@ dan dikirim ke pelanggan. Jika stok habis, admin dikasih tahu untuk `/kirim` man
 
 ## Struktur
 ```
-src/index.js   → koneksi Baileys + pairing code + auto reconnect
-src/handler.js → router pesan pelanggan + admin
+src/index.js   → koneksi Baileys + pairing code + auto reconnect + event grup
+src/handler.js → router pesan pelanggan + admin + grup
+src/group.js   → logika grup: pemicu mention/prefix, katalog grup, sambutan member
 src/menus.js   → teks menu + tombol/list interaktif + fallback angka
 src/store.js   → JSON store: products, carts, orders
 src/admin.js   → command admin
