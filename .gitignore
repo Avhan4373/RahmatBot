@@ -19,3 +19,4 @@ dist/
 # === Server lisensi (punya repo/deploy sendiri, JANGAN ikut ke server klien) ===
 license-server/node_modules/
 license-server/licenses.json
+license-server/deploy/.secrets.local

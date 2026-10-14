@@ -17,6 +17,8 @@ import path from 'path';
 
 const SECRET = process.env.LICENSE_SECRET || 'GANTI-DENGAN-SECRET-ACAK-KAMU-9f2a7c';
 const PORT = Number(process.env.PORT || 8787);
+// Bind ke loopback saja (hanya Nginx reverse proxy yang boleh akses).
+const HOST = process.env.HOST || '127.0.0.1';
 const DB = process.env.LICENSE_DB || path.join(process.cwd(), 'licenses.json');
 
 const load = () => { try { return JSON.parse(fs.readFileSync(DB, 'utf8')); } catch { return {}; } };
@@ -107,4 +109,4 @@ app.post('/api/verify', (req, res) => {
 app.get('/api/health', (_req, res) => res.json({ ok: true, t: Date.now() }));
 app.get('/', (_req, res) => res.json({ service: 'rahmatbot-license', status: 'up' }));
 
-app.listen(PORT, () => console.log(`🔐 Server lisensi jalan di port ${PORT}`));
+app.listen(PORT, HOST, () => console.log(`🔐 Server lisensi jalan di ${HOST}:${PORT}`));

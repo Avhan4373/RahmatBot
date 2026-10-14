@@ -1,0 +1,33 @@
+# lisensi.service — server lisensi RahmatBot (satu instance).
+# Pasang di VPS:
+#   sudo cp deploy/lisensi.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now lisensi
+#
+# Server hanya bind ke loopback (127.0.0.1:8787); akses publik lewat Nginx
+# (reverse proxy + HTTPS). Jangan expose port 8787 ke internet langsung.
+[Unit]
+Description=RahmatBot License Server
+After=network.target
+
+[Service]
+Type=simple
+User=lisensi
+Group=lisensi
+WorkingDirectory=/opt/lisensi/server
+Environment="HOME=/opt/lisensi"
+EnvironmentFile=/opt/lisensi/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+
+# Pengerasan dasar
+NoNewPrivileges=true
+PrivateTmp=true
+# ProtectSystem=full membuat /opt read-only → WorkingDirectory gagal.
+# Pakai 'true' (hanya /usr /boot /efi) agar /opt tetap bisa dibaca/ditulis.
+ProtectSystem=true
+ProtectHome=true
+ReadWritePaths=/opt/lisensi
+
+[Install]
+WantedBy=multi-user.target

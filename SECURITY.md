@@ -46,20 +46,16 @@ npm run build:secure      # hasilkan dist/bot.mjs (ter-obfuscate)
 ```
 
 ### 2. Jalankan server lisensi (di VPS/domain MILIKMU)
+> ✅ **Sudah terpasang** di VPS Biznet: `https://lisensi.avhanapp.my.id`
+> Detail & cara kelola: lihat `license-server/README.md`.
+
 ```bash
 cd license-server
-npm install
-export LICENSE_SECRET="SECRET-ACAK-MILIKMU"   # samakan dgn bot
-node server.js                                 # jalan di port 8787 (default)
-
-# buat lisensi untuk klien:
-node server.js keygen 30 "Toko Si A"           # 30 hari
-node server.js keygen 0  "Toko Si B"           # selamanya
-node server.js revoke RB-xxxx-xxxx-xxxx-xxxx   # cabut / matikan
-node server.js list                            # lihat semua
+bash deploy/lisensi.sh list                  # lihat lisensi
+bash deploy/lisensi.sh new 30 "Toko Si A"    # buat lisensi 30 hari
+bash deploy/lisensi.sh new 0  "Toko Si B"    # lisensi selamanya
+bash deploy/lisensi.sh revoke RB-xxxx-...    # cabut / matikan
 ```
-
-> ⚠️ Server lisensi **JANGAN** ikut dikirim ke server klien. Ini milikmu.
 
 ### 3. Kirim ke server klien
 Kirim folder project **TANPA** `src/`, `scripts/`, `license-server/`, tapi

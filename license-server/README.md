@@ -38,3 +38,33 @@ node server.js list                      # daftar semua lisensi
 ## API
 - `POST /api/verify` — body `{ key, fp, bot }` → balasan bertanda tangan
 - `GET /api/health` — cek status
+
+---
+
+## 🚀 Sudah di-deploy di VPS Biznet
+
+| Item | Nilai |
+|---|---|
+| **URL** | `https://lisensi.avhanapp.my.id` (setelah certbot) |
+| **VPS** | `103.127.97.249` (user `avhanvps`, key `~/.ssh/biznetgio`) |
+| **Folder** | `/opt/lisensi/server` (user sistem `lisensi`) |
+| **Service** | `sudo systemctl {status,restart,stop} lisensi` |
+| **Bind** | `127.0.0.1:8787` (hanya Nginx yang akses) |
+| **Nginx** | `/etc/nginx/sites-available/lisensi` |
+| **DB lisensi** | `/opt/lisensi/server/licenses.json` |
+
+### Kelola lisensi dari komputer lokal (paling praktis)
+```bash
+cd license-server
+bash deploy/lisensi.sh list
+bash deploy/lisensi.sh new 30 "Toko Si A"     # 30 hari
+bash deploy/lisensi.sh new 0  "Toko Si B"     # selamanya
+bash deploy/lisensi.sh revoke RB-xxxx-xxxx-xxxx-xxxx
+```
+
+### Deploy ulang / update server lisensi
+```bash
+cd license-server
+bash deploy/deploy.sh "$LICENSE_SECRET"
+```
+
