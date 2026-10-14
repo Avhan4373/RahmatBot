@@ -1,4 +1,5 @@
 import { getProducts, getCart, findProduct } from './store.js';
+import { jidToNumber } from './lids.js';
 import { rupiah } from '../config.js';
 
 // Pola tombol mengikuti SC UMKM: LIST MESSAGE
@@ -214,7 +215,7 @@ export function adminOrderText(order) {
   return (
 `🔔 *ORDER BARU BUTUH VERIFIKASI*
 🆔 ${order.id}
-👤 ${order.userName || '-'} (${order.userJid.split('@')[0]})
+👤 ${order.userName || '-'} (${jidToNumber(order.userJid)})
 ${lines}
 💰 Total: ${order.total} (${rupiah(order.total)})
 📎 Bukti: foto di atas ⬆️

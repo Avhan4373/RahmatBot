@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { resolveJid } from './lids.js';
+import { resolveJid, jidToNumber } from './lids.js';
 import { config, rupiah } from '../config.js';
 import {
   getProducts, saveProducts, findProduct, nextProductId, addStock,
@@ -66,12 +66,12 @@ export async function handleAdminCommand({ sock, from, text, reply }) {
       const last = getOrders().slice(-10).reverse();
       if (!last.length) return reply('Belum ada order.');
       return reply('📦 *10 order terakhir:*\n' + last.map(o =>
-        `• ${o.id} — ${o.status} — ${fmt(o.total)} — ${o.userJid.split('@')[0]}`
+        `• ${o.id} — ${o.status} — ${fmt(o.total)} — ${jidToNumber(o.userJid)}`
       ).join('\n') + '\n\nDetail: /order ORDER-XXXX');
     }
     const o = findOrder(arg);
     if (!o) return reply('Tidak ditemukan.');
-    return reply(`🧾 *${o.id}*\nStatus: ${o.status}\nUser: ${o.userName} (${o.userJid})\n` +
+    return reply(`🧾 *${o.id}*\nStatus: ${o.status}\nUser: ${o.userName} (${jidToNumber(o.userJid)})\n` +
       o.items.map(i => `• ${i.name} x${i.qty} = ${fmt(i.price * i.qty)}`).join('\n') +
       `\nTotal: ${fmt(o.total)}\nDibuat: ${o.createdAt}`);
   }

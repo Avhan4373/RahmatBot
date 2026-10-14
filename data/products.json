@@ -5,6 +5,7 @@
     "price": 15000,
     "desc": "Canva Pro via invite email, garansi full 1 bulan.",
     "stock": [
+      "akun-canva-001@example.com | pass: Contoh001",
       "akun-canva-002@example.com | pass: Contoh002"
     ],
     "active": true
@@ -49,7 +50,6 @@
     "price": 25000,
     "desc": "Akun Melolo | stock:10",
     "stock": [
-      "akun1",
       "akun2",
       "akun3"
     ],

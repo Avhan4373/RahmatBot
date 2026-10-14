@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { config } from '../config.js';
-import { learnFromMessage, isAdminJid } from './lids.js';
+import { learnFromMessage, isAdminJid, jidToNumber } from './lids.js';
 import {
   getProducts, findProduct, getCart, setCart, clearCart,
   createOrder, findOrder, updateOrder, userOrders, pendingPaymentOrder, getOrders,
@@ -151,7 +151,7 @@ export async function handleMessage(sock, m) {
       const need = all.filter(o => ['PENDING_VERIF', 'MENUNGGU_BAYAR'].includes(o.status));
       if (!need.length) return reply('✅ Tidak ada order pelanggan yang menunggu.\nDetail: /order ORDER-XXXX');
       return reply('📋 *ORDER PELANGGAN MENUNGGU (' + need.length + ')*\n' + need.slice(-15).reverse().map(o =>
-        `• ${o.id} — ${o.status}\n  ${(o.userName || '-')} (${o.userJid.split('@')[0]}) — Rp${Number(o.total).toLocaleString('id-ID')}\n  ACC: /acc ${o.id}`
+        `• ${o.id} — ${o.status}\n  ${(o.userName || '-')} (${jidToNumber(o.userJid)}) — Rp${Number(o.total).toLocaleString('id-ID')}\n  ACC: /acc ${o.id}`
       ).join('\n') + '\n\nDetail: /order ORDER-XXXX');
     }
     const list = userOrders(from);
