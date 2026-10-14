@@ -1,5 +1,5 @@
-import { config } from '../config.js';
-import { catalogText, productDetailText } from './menus.js';
+import { config, rupiah } from '../config.js';
+import { getProducts, findProduct } from './store.js';
 
 // ===== Identitas bot =====
 // sock.user bisa berupa {id, lid, jid}. Ambil semua varian nomor (tanpa device ":x")
@@ -91,54 +91,139 @@ export function stripGroupPrefix(text = '') {
 // memakai TEKS BIASA. Order diarahkan ke chat pribadi.
 
 export function groupRedirectText() {
+  const p = config.groupPrefix || '.';
   const wa = config.phoneNumber ? `https://wa.me/${config.phoneNumber}?text=menu` : null;
   return (
-`🛍️ *ORDER LEWAT CHAT PRIBADI*
-Supaya privasi & bukti bayar kamu aman, proses order (keranjang, QRIS, bukti)
-dilakukan lewat chat pribadi ya 🙏
+`🛒 *CARA ORDER — PANDUAN*
 
-${wa ? `👉 Klik: ${wa}\n` : ''}Atau balas *.menu* lalu ikuti arahan.`);
+Order & pembayaran dilakukan di *chat pribadi*
+biar aman & privasi kamu terjaga 🔒
+
+*Langkah-langkah:*
+1️⃣ Buka chat pribadi dengan saya
+2️⃣ Pilih produk & ketik *beli <ID>*
+3️⃣ Bayar via *QRIS* (nominal pas)
+4️⃣ Kirim *foto bukti* bayar
+5️⃣ Admin verifikasi → produk dikirim otomatis ✅
+
+${wa ? `👉 *Klik untuk chat pribadi:*\n   ${wa}\n` : ''}
+━━━━━━━━━━━━━━━━━━
+⛔ Order TIDAK bisa dilakukan di dalam grup ini.
+📋 Lihat produk dulu: *${p}katalog*`);
 }
 
 export function groupMainMenuText(botName) {
   const p = config.groupPrefix || '.';
   return (
-`🤖 *${botName} — KATALOG GRUP*
-Saya aktif di grup ini untuk berbagi katalog produk digital 🛍️
+`🤖 *${botName} — PUSAT PRODUK DIGITAL*
 
-*Ketik perintah berikut:*
-1️⃣  *${p}katalog* — lihat daftar produk
-2️⃣  *${p}detail P01* — detail produk
-3️⃣  *${p}caraorder* — cara pesan (chat pribadi)
-4️⃣  *${p}bantuan* — bantuan
+Selamat datang! Di grup ini saya menyediakan berbagai
+produk digital murah & bergaransi ✅
 
-💬 Order (keranjang, QRIS, bukti bayar) lewat chat pribadi ya.`);
+*📋 MENU:*
+┃ 🔍  *${p}katalog*      — lihat semua produk
+┃ 🧾  *${p}detail P01*   — rincian 1 produk
+┃ 🛒  *${p}caraorder*    — cara beli
+┃ ❓  *${p}bantuan*      — panduan
+
+━━━━━━━━━━━━━━━━━━
+💬 Order & bayar dilakukan di *chat pribadi* ya
+   biar aman & privasi terjaga 🙏`);
+}
+
+// Helper: badge stok yang jelas
+function stockBadge(p) {
+  const n = p.stock?.length ?? 0;
+  return n > 0 ? `✅ Ready (${n})` : `⏳ Stok habis`;
 }
 
 export function groupCatalogText() {
-  return (
-catalogText() +
-`\n\n💬 *Order lewat chat pribadi* — ketik *${config.groupPrefix || '.'}caraorder* untuk panduan.`);
+  const p = config.groupPrefix || '.';
+  const ps = getProducts().filter((x) => x.active !== false);
+  if (!ps.length) return '📭 Katalog masih kosong. Coba lagi nanti ya 🙏';
+
+  let t =
+`🛍️ *KATALOG PRODUK DIGITAL*
+_Semua produk READY & BERGARANSI ✅_
+
+Halo 👋 berikut daftar produk yang tersedia.
+Lihat detail dengan ketik *${p}detail <ID>* (cth: *${p}detail P01*).
+
+━━━━━━━━━━━━━━━━━━`;
+
+  ps.forEach((prod, i) => {
+    const ready = (prod.stock?.length ?? 0) > 0;
+    t +=
+`\n
+*${i + 1}. ${prod.name}*
+   💰 *${rupiah(prod.price)}*
+   📦 ${stockBadge(prod)}
+   🔖 ID: *${prod.id}*${ready ? `  ➜ ketik *${p}detail ${prod.id}*` : ''}`;
+  });
+
+  t +=
+`\n
+━━━━━━━━━━━━━━━━━━
+💬 *Mau order?*
+Order & pembayaran dilakukan di *chat pribadi* ya
+biar aman & privasi terjaga 🙏
+
+👉 Ketik *${p}caraorder* untuk panduan lengkap.`;
+
+  return t;
 }
 
 export function groupProductText(id) {
+  const p = config.groupPrefix || '.';
+  const prod = findProduct(id);
+  if (!prod) {
+    return `❌ Produk *${id}* tidak ditemukan.\nKetik *${p}katalog* untuk lihat daftar produk.`;
+  }
+  const ready = (prod.stock?.length ?? 0) > 0;
   return (
-productDetailText(id) +
-`\n\n💬 Order lewat chat pribadi — ketik *${config.groupPrefix || '.'}caraorder*.`);
+`📦 *DETAIL PRODUK*
+━━━━━━━━━━━━━━━━━━
+
+*${prod.name}*
+🔖 ID Produk : *${prod.id}*
+💰 Harga     : *${rupiah(prod.price)}*
+📦 Stok      : ${stockBadge(prod)}
+📝 Deskripsi :
+   ${prod.desc || 'Tidak ada deskripsi.'}
+
+━━━━━━━━━━━━━━━━━━
+🛒 *CARA ORDER:*
+1️⃣ Ketik *${p}caraorder* untuk buka chat pribadi
+2️⃣ Di chat pribadi ketik *beli ${prod.id}*
+3️⃣ Bayar via QRIS & kirim bukti bayar
+4️⃣ Admin verifikasi → produk dikirim otomatis ✅
+
+${ready ? '💡 Produk ini ready, bisa diproses cepat!' : '⚠️ Stok sedang habis, tanya admin dulu ya.'}
+
+➜ Lihat produk lain: *${p}katalog*`);
 }
 
 export function groupHelp(botName) {
   const p = config.groupPrefix || '.';
   return (
-`❓ *Bantuan ${botName} (Grup)*
+`❓ *BANTUAN ${botName.toUpperCase()}*
 
-• Tag saya atau ketik *${p}menu* → menu
-• *${p}katalog* → daftar produk digital
-• *${p}detail P01* → detail produk
-• *${p}caraorder* → cara order via chat pribadi
+Saya bot penjualan produk digital di grup ini 🤖
+Tugas saya: menampilkan katalog & mengarahkan
+kamu untuk order dengan aman.
 
-💬 Order (keranjang, QRIS, bukti bayar) dilakukan lewat *chat pribadi*.
-⛔ Perintah admin (/acc, /menu, /stok, ...) hanya berlaku di chat pribadi.`);
+*📋 PERINTAH TERSEDIA:*
+┃ 🔍  *${p}katalog*      — semua produk
+┃ 🧾  *${p}detail P01*   — rincian produk
+┃ 🛒  *${p}caraorder*    — cara beli
+┃ 🤖  *${p}menu*         — menu utama
+
+━━━━━━━━━━━━━━━━━━
+🔒 *Kenapa order di chat pribadi?*
+Supaya data pembayaran & produk kamu aman,
+tidak terlihat member grup lain.
+
+💬 Ketik *${p}caraorder* untuk mulai 🙏`);
 }
 
 // ===== Sambutan member baru / pamit =====
@@ -148,6 +233,7 @@ function pickName(memberJid) {
 }
 
 export function welcomeText(memberJid, groupName, botName) {
+  const p = config.groupPrefix || '.';
   if (config.groupWelcomeText) {
     return config.groupWelcomeText
       .replaceAll('{{member}}', '@' + pickName(memberJid))
@@ -155,14 +241,20 @@ export function welcomeText(memberJid, groupName, botName) {
       .replaceAll('{{bot}}', botName);
   }
   return (
-`👋 Selamat datang @${pickName(memberJid)} di *${groupName}*!
+`👋 *Selamat datang* @${pickName(memberJid)} di
+*${groupName}*! 🎉
 
-Ketik *${config.groupPrefix || '.'}katalog* atau tag saya untuk lihat produk digital.
-Order lewat chat pribadi ya 🙏`);
+Butuh produk digital murah & bergaransi?
+Saya siap bantu 🤖
+
+🔍 Lihat katalog: ketik *${p}katalog*
+🛒 Cara order  : ketik *${p}caraorder*
+
+Semoga betah ya 🙏`);
 }
 
 export function goodbyeText(memberJid, groupName) {
-  return `👋 @${pickName(memberJid)} telah keluar dari *${groupName}*. Sampai jumpa!`;
+  return `👋 @${pickName(memberJid)} telah keluar dari *${groupName}*.\nSampai jumpa & terima kasih! 🙏`;
 }
 
 // ===== Tangani event member grup (join/leave) =====// ev = { id, author, participants: string[], action: 'add'|'remove'|... }

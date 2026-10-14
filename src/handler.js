@@ -284,8 +284,11 @@ async function handleGroupMessage(sock, msg, { from, content, text, reply }) {
   }
 
   // Sapaan / menu
-  if (['halo', 'hallo', 'hai', 'hi', 'p', 'assalamualaikum', 'menu', 'start', 'mulai', '0', 'help', 'bantuan', '?', 'allmenu'].includes(t)) {
+  if (['halo', 'hallo', 'hai', 'hi', 'p', 'assalamualaikum', 'menu', 'start', 'mulai', '0', 'allmenu'].includes(t)) {
     return reply(groupMainMenuText(config.botName));
+  }
+  if (['help', 'bantuan', 'bantu', '?'].includes(t)) {
+    return reply(groupHelp(config.botName));
   }
   if (['katalog', 'katalog produk', 'produk', 'pricelist', 'listproduk', '1'].includes(t)) {
     const ps = getProducts().filter(p => p.active !== false);
@@ -296,11 +299,11 @@ async function handleGroupMessage(sock, msg, { from, content, text, reply }) {
     return reply(groupRedirectText());
   }
 
-  // Detail produk: "detail P01" / "P01"
-  let mDetail = /^(?:#?detail|info|lihat)\s+(P\d+)/i.exec(body);
+  // Detail produk: "detail P01" / "P01". Terima ID apa pun agar bisa beri pesan jelas.
+  let mDetail = /^(?:#?detail|info|lihat)\s+(.+)$/i.exec(body);
   if (mDetail) {
-    const p = findProduct(mDetail[1]);
-    if (!p) return reply(`❌ Produk ${mDetail[1]} tidak ditemukan. Ketik *katalog*.`);
+    const p = findProduct(mDetail[1].trim());
+    if (!p) return reply(`❌ Produk *${mDetail[1].trim()}* tidak ditemukan.\nKetik *${config.groupPrefix || '.'}katalog* untuk lihat daftar produk.`);
     return reply(groupProductText(p.id));
   }
   if (/^P\d+$/i.test(body)) {

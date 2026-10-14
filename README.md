@@ -72,8 +72,9 @@ Bot dapat diundang ke grup untuk menampilkan katalog. Aturan:
 - Bot **hanya merespons** bila: di-@mention, pesan diawali prefix (`GROUP_PREFIX`,
   default `.`; `/` juga diterima), menjawab (reply) pesan bot, atau menekan tombol
   bot (bila ada).
-- Perintah grup: `.menu` / tag bot → menu grup; `.katalog` → daftar produk;
-  `.detail P01` → detail; `.caraorder` → panduan order.
+- Perintah grup: `.menu` / tag bot → menu grup; `.katalog` → daftar produk rapi
+  (harga + badge stok); `.detail P01` → rincian produk + langkah order;
+  `.caraorder` → panduan order; `.bantuan` → bantuan.
 - ⚠️ **WhatsApp tidak mendukung tombol/list interaktif di chat grup** (server
   menolak stanza dengan error `479`/`smax-invalid`). Karena itu semua balasan di
   grup memakai **teks biasa**. (Referensi SC UMKM pun menolak `menu` di grup dan
