@@ -27,6 +27,8 @@ Pilih menu di bawah (klik tombol):
 🛍️  Katalog produk
 📋  Order pelanggan menunggu
 🛒  Keranjang saya
+⚙️  Pengaturan toko (nama & QRIS)
+🖼️  Ganti gambar QRIS
 🛠️  Fitur-fitur admin`;
     return {
       text,
@@ -38,10 +40,12 @@ Pilih menu di bawah (klik tombol):
           { title: 'Katalog produk', rowId: 'katalog', description: 'Lihat produk digital' },
           { title: 'Order menunggu', rowId: 'status', description: 'Order pelanggan + ACC' },
           { title: 'Keranjang saya', rowId: 'keranjang', description: 'Order sebagai pembeli' },
-          { title: 'Fitur admin', rowId: 'adminmenu', description: 'Perintah /acc /menu /stok' },
+          { title: 'Pengaturan toko', rowId: '/set', description: 'Nama bot, toko, label QRIS' },
+          { title: 'Ganti gambar QRIS', rowId: '/qris', description: 'Lihat / ganti QRIS' },
+          { title: 'Fitur admin', rowId: 'adminmenu', description: 'Daftar semua perintah' },
         ],
       }],
-      fallback: text + '\n\n(Balas: katalog / status / keranjang / adminmenu)',
+      fallback: text + '\n\n(Balas: katalog / status / keranjang / /set / /qris / adminmenu)',
     };
   }
   const text = MAIN_MENU_TEXT.replace('{{BOT}}', botName);
@@ -83,7 +87,15 @@ status — order pelanggan yang menunggu
 /stok P01 akun1,akun2 — tambah
 /stok lihat P01 — tampilkan isi
 /stok hapus P01 2 — hapus 1 item
-/stok kosong P01 — hapus semua`;
+/stok kosong P01 — hapus semua
+
+*Pengaturan toko:*
+/set — lihat pengaturan
+/set bot Nama Baru — ganti nama bot
+/set toko Nama Toko — ganti nama toko
+/set qrislabel Label — ganti label QRIS
+/set reset bot|toko|qrislabel — kembalikan default
+/qris — lihat / ganti gambar QRIS`;
 
 export const HELP_TEXT =
 `❓ *Bantuan {{BOT}}*
