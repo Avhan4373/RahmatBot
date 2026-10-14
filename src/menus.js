@@ -18,7 +18,31 @@ Pilih dengan klik tombol di bawah 👇 atau ketik angkanya:
 
 // Menu utama sebagai POLL (bisa diklik) + teks bernomor (bisa diketik).
 // options[].id = perintah yang dijalankan saat opsi diklik.
-export function mainMenuList(botName) {
+export function mainMenuList(botName, admin = false) {
+  if (admin) {
+    const text = `🤖 *${botName} — MODE ADMIN*
+Pilih menu di bawah (klik tombol):
+
+🛍️  Katalog produk
+📋  Order pelanggan menunggu
+🛒  Keranjang saya
+🛠️  Fitur-fitur admin`;
+    return {
+      text,
+      buttonText: 'Menu Admin',
+      footer: botName,
+      sections: [{
+        title: 'Menu admin',
+        rows: [
+          { title: 'Katalog produk', rowId: 'katalog', description: 'Lihat produk digital' },
+          { title: 'Order menunggu', rowId: 'status', description: 'Order pelanggan + ACC' },
+          { title: 'Keranjang saya', rowId: 'keranjang', description: 'Order sebagai pembeli' },
+          { title: 'Fitur admin', rowId: 'adminmenu', description: 'Perintah /acc /menu /stok' },
+        ],
+      }],
+      fallback: text + '\n\n(Balas: katalog / status / keranjang / adminmenu)',
+    };
+  }
   const text = MAIN_MENU_TEXT.replace('{{BOT}}', botName);
   return {
     text,
@@ -36,6 +60,29 @@ export function mainMenuList(botName) {
     fallback: text + '\n\n(Balas: katalog / keranjang / status / bantuan)',
   };
 }
+
+export const ADMIN_HELP_TEXT =
+`[ADMIN {{BOT}}]
+
+*Order:*
+/acc ORDER-XXXX — lunaskan + kirim stok otomatis
+/tolak ORDER-XXXX alasan — tolak bukti
+/order — 10 order terakhir
+/order ORDER-XXXX — detail order
+status — order pelanggan yang menunggu
+/kirim ORDER-XXXX isi — kirim produk manual
+
+*Produk:*
+/menu — daftar • /menu info P01 — detail + stok
+/menu add Nama | 25000 | deskripsi | stok:a,b
+/menu edit P01 harga 30000 — (nama/deskripsi/on/off)
+/menu del P01 — hapus produk
+
+*Stok:*
+/stok P01 akun1,akun2 — tambah
+/stok lihat P01 — tampilkan isi
+/stok hapus P01 2 — hapus 1 item
+/stok kosong P01 — hapus semua`;
 
 export const HELP_TEXT =
 `❓ *Bantuan {{BOT}}*

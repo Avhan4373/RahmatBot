@@ -6,7 +6,7 @@ import {
   createOrder, findOrder, updateOrder, userOrders, pendingPaymentOrder, getOrders,
 } from './store.js';
 import {
-  MAIN_MENU_TEXT, HELP_TEXT, mainMenuList, catalogList, catalogText,
+  MAIN_MENU_TEXT, HELP_TEXT, ADMIN_HELP_TEXT, mainMenuList, catalogList, catalogText,
   productQtyList, productDetailText, cartText, cartActionList,
 } from './menus.js';
 import { sendInvoice, forwardProofToAdmins } from './qris.js';
@@ -24,9 +24,11 @@ async function sendMenuPoll(sock, jid, listObj, quoted) {
 
 
 
-async function sendMainMenu(sock, jid, quoted) {
-  return sendMenuPoll(sock, jid, mainMenuList(config.botName), quoted);
+async function sendMainMenu(sock, jid, quoted, admin = false) {
+  return sendMenuPoll(sock, jid, mainMenuList(config.botName, admin), quoted);
 }
+const adminHelp = () => ADMIN_HELP_TEXT.replace('{{BOT}}', config.botName);
+const userHelp = () => HELP_TEXT.replace('{{BOT}}', config.botName);
 
 async function sendCatalog(sock, jid, quoted) {
   const ps = getProducts().filter(p => p.active !== false);
@@ -131,7 +133,7 @@ export async function handleMessage(sock, m) {
   // ===== 3) Sapaan / menu utama (rowId "menu" tidak ada; SC pakai sambutan sekali,
   // kita kirim tiap diminta agar simpel) =====
   if (['halo', 'hallo', 'hai', 'hi', 'p', 'assalamualaikum', 'menu', 'start', 'mulai', '0', '#allmenu', 'allmenu'].includes(t)) {
-    return sendMainMenu(sock, from, msg);
+    return sendMainMenu(sock, from, msg, admin);
   }
   if (['1', 'katalog', 'katalog produk', 'produk', 'order', 'beli', '#pricelist', 'pricelist', 'listproduk'].includes(t)) {
     return sendCatalog(sock, from, msg);
@@ -157,7 +159,11 @@ export async function handleMessage(sock, m) {
     return reply('📦 *Order kamu:*\n' + list.map(o => `• ${o.id} — ${o.status} — Rp${Number(o.total).toLocaleString('id-ID')}`).join('\n'));
   }
   if (['4', 'bantuan', 'help', 'bantu', '?', '#hubown', 'hubown'].includes(t)) {
-    return reply(HELP_TEXT.replace('{{BOT}}', config.botName));
+    return reply(admin ? adminHelp() : userHelp());
+  }
+  if (t === 'adminmenu') {
+    if (!admin) return reply(userHelp());
+    return reply(adminHelp());
   }
 
   // ===== 4) Detail produk: "detail P01" (opsi list katalog) / "#detail P01" / "P01" =====
