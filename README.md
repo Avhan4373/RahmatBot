@@ -138,6 +138,9 @@ src/store.js   → JSON store: products, carts, orders
 src/admin.js   → command admin
 src/settings.js → pengaturan runtime (/set, ganti QRIS) di data/settings.json
 src/qris.js    → kirim invoice + QRIS
+src/license.js → gerbang lisensi (obfuscation + cek online + heartbeat)
+scripts/build.mjs → build obfuscate (bundle → obfuscate → dist/bot.mjs)
+license-server/   → server lisensi (jalankan di VPS milikmu, lihat SECURITY.md)
 config.js      → baca .env
 data/products.json → contoh Canva, Netflix, dll (EDIT SESUAI TOKO)
 assets/qris.png    → GANTI dengan QRIS statis kamu
@@ -147,3 +150,13 @@ assets/qris.png    → GANTI dengan QRIS statis kamu
 Bot TIDAK bisa verifikasi otomatis nominal QRIS statis (nominal tidak tertanam
 di QR). Jadi verifikasi tetap manual via foto bukti. Kalau mau otomatis penuh,
 butuh gateway (Tripay/Xendit/Midtrans QRIS dinamis) — bisa ditambah nanti.
+
+## 🛡️ Proteksi sebelum deploy ke server orang lain
+Sebelum menyerahkan bot ke server milik orang lain, baca **[SECURITY.md](SECURITY.md)**.
+Ringkasnya:
+```bash
+npm run build:secure     # bundle + obfuscate → dist/bot.mjs
+node dist/bot.mjs        # yang dijalankan di server klien (source src/ tidak dikirim)
+```
+Plus **server lisensi** (`license-server/`) yang kamu jalankan di VPS sendiri
+untuk memverifikasi & mematikan bot dari jauh. Detail lengkap di SECURITY.md.

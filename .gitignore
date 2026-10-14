@@ -10,4 +10,12 @@ data/carts.json
 data/lids.json
 data/polls.json
 data/settings.json
+data/.lic
 assets/qris-upload.png
+
+# === Hasil build ter-obfuscate (jangan di-commit; ini yang dikirim ke server) ===
+dist/
+
+# === Server lisensi (punya repo/deploy sendiri, JANGAN ikut ke server klien) ===
+license-server/node_modules/
+license-server/licenses.json

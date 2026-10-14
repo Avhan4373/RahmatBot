@@ -6,7 +6,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "build:secure": "node scripts/build.mjs",
+    "start:secure": "node dist/bot.mjs"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
@@ -15,7 +17,15 @@
     "pino": "^9.4.0",
     "qrcode-terminal": "^0.12.0"
   },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "javascript-obfuscator": "^5.9.0"
+  },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "javascript-obfuscator": "^5.9.0"
   }
 }

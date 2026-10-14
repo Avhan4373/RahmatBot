@@ -10,6 +10,7 @@ import fs from 'fs';
 import { config } from '../config.js';
 import { handleMessage } from './handler.js';
 import { handleGroupParticipants } from './group.js';
+import { enforceLicense, startHeartbeat } from './license.js';
 
 const logger = pino({ level: 'warn' });
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -168,7 +169,14 @@ async function start() {
   // jauhkan auto-read agar centang biru tidak otomatis (opsional): biarkan default
 }
 
+// ===== Gerbang lisensi sebelum bot jalan =====
+// Bila LICENSE_REQUIRED=true dan lisensi tidak valid → proses berhenti.
+await enforceLicense({ botName: config.botName });
+
 start().catch(e => {
   console.error('Fatal:', e);
   process.exit(1);
 });
+
+// Heartbeat: server lisensi bisa mematikan bot dari jauh.
+startHeartbeat({ botName: config.botName });
