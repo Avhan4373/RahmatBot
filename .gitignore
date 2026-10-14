@@ -1,0 +1,11 @@
+node_modules/
+auth_info/
+.env
+*.log
+.DS_Store
+# runtime state (dibuat otomatis saat bot jalan)
+struk-*.png
+data/orders.json
+data/carts.json
+data/lids.json
+data/polls.json
