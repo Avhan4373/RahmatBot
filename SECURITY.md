@@ -43,7 +43,13 @@ memberimu **kill-switch** untuk mematikan bot dari jauh bila disalahgunakan.
 ```bash
 npm install
 npm run build:secure      # hasilkan dist/bot.mjs (ter-obfuscate)
+npm run pack              # hasilkan release/rahmatbot-client/ (siap kirim)
 ```
+
+> Saat `build:secure`, **LICENSE_SECRET & LICENSE_SERVER di-"bake"** ke dalam
+> kode ter-obfuscate. Jadi klien tidak perlu (dan tidak bisa) melihat/mengubah
+> rahasia itu. Enforcement lisensi juga dipaksa aktif — klien tidak bisa
+> mematikannya lewat `.env`.
 
 ### 2. Jalankan server lisensi (di VPS/domain MILIKMU)
 > ✅ **Sudah terpasang** di VPS Biznet: `https://lisensi.avhanapp.my.id`
@@ -57,6 +63,25 @@ bash deploy/lisensi.sh new 0  "Toko Si B"    # lisensi selamanya
 bash deploy/lisensi.sh revoke RB-xxxx-...    # cabut / matikan
 ```
 
+### 3. Kirim ke klien
+Cukup kirim **folder `release/rahmatbot-client/`** (atau zip-nya):
+```
+dist/bot.mjs          ← kode ter-obfuscate (yang dijalankan)
+assets/               ← qris.png, logo
+data/products.json    ← katalog contoh
+package.json          ← versi bersih (tanpa script dev)
+.env                  ← template, klien isi sendiri
+README-KLIEN.md       ← panduan untuk klien
+start.sh              ← launcher
+```
+Klien cukup: `npm install --omit=dev` → isi `.env` (termasuk `LICENSE_KEY`) → `npm start`.
+
+> **`src/`, `scripts/`, `license-server/`, `config.js` TIDAK PERNAH ikut** —
+> kode asli & rahasia tetap aman di komputermu.
+
+Kalau server klien sulit compile `canvas`, pakai `PACK_WITH_DEPS=true npm run pack`
+untuk ikut menyertakan `node_modules` (pastikan versi Node klien sama).
+
 ### 3. Kirim ke server klien
 Kirim folder project **TANPA** `src/`, `scripts/`, `license-server/`, tapi
 **DENGAN**:
@@ -66,16 +91,15 @@ node_modules/         ← dependency
 assets/               ← qris.png, logo
 data/                 ← products.json
 package.json
-.env                  ← konfigurasi (isi LICENSE_KEY & LICENSE_SERVER)
+.env                  ← konfigurasi (isi LICENSE_KEY)
 ```
 
 `.env` di server klien:
 ```env
 LICENSE_KEY=RB-xxxx-xxxx-xxxx-xxxx        # key yang kamu berikan
-LICENSE_SERVER=https://lisensi.domainmu.com
-LICENSE_REQUIRED=true                      # WAJIB true!
-LICENSE_SECRET=SECRET-ACAK-MILIKMU         # samakan dengan server
 ```
+> ⚠️ `LICENSE_SERVER` & `LICENSE_SECRET` **tidak perlu** diisi — keduanya sudah
+> tertanam di dalam kode ter-obfuscate (dibakar saat build).
 
 ### 4. Jalankan di server klien
 ```bash
@@ -97,6 +121,28 @@ node dist/bot.mjs
 | Key dicabut (revoke) | ⛔ Ditolak — "Key dicabut" |
 | Server down + cache fresh | ✅ Jalan (grace period 72 jam) |
 | Server down + cache kadaluarsa | ⛔ Ditolak |
+| **SECRET/URL tersembunyi di dist** | ✅ Tidak terbaca plaintext |
+| **Klien set `LICENSE_REQUIRED=false`** | ⛔ Tetap dipaksa (server di-bake) |
+| **Klien ganti `LICENSE_SERVER` ke palsu** | ⛔ Diabaikan (pakai server di-bake) |
+| **Folder rilis jalan di lingkungan bersih** | ✅ Lisensi valid + connect |
+
+---
+
+## 📦 Packaging (`npm run pack`)
+
+Perintah `npm run pack` otomatis: build ter-obfuscate → susun folder
+`release/rahmatbot-client/` yang **siap dikirim** ke klien.
+
+Yang **disertakan**: `dist/`, `assets/`, `data/products.json`, `package.json`
+(bersih), `.env` (template), `README-KLIEN.md`, `start.sh`.
+
+Yang **TIDAK pernah disertakan**: `src/`, `scripts/`, `license-server/`,
+`config.js`, `.git/`, `auth_info/`, `*.log`.
+
+```bash
+npm run pack                          # ringan (~400 KB, tanpa node_modules)
+PACK_WITH_DEPS=true npm run pack      # ikut node_modules (~119 MB)
+```
 
 ---
 

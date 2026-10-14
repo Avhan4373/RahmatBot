@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "build:secure": "node scripts/build.mjs",
+    "pack": "node scripts/pack.mjs",
     "start:secure": "node dist/bot.mjs"
   },
   "dependencies": {
@@ -23,9 +24,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.2",
-    "javascript-obfuscator": "^5.9.0"
   }
 }

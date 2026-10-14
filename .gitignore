@@ -15,6 +15,7 @@ assets/qris-upload.png
 
 # === Hasil build ter-obfuscate (jangan di-commit; ini yang dikirim ke server) ===
 dist/
+release/
 
 # === Server lisensi (punya repo/deploy sendiri, JANGAN ikut ke server klien) ===
 license-server/node_modules/

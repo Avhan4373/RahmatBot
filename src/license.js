@@ -18,8 +18,15 @@ import crypto from 'crypto';
 // =====================================================================
 
 // SECRET dipakai untuk verifikasi tanda tangan balasan server.
-// Ganti dengan string acak milikmu (harus SAMA dengan di license-server).
-const SECRET = process.env.LICENSE_SECRET || 'GANTI-DENGAN-SECRET-ACAK-KAMU-9f2a7c';
+//
+// PENTING: saat `npm run build:secure`, nilai di bawah di-"BAKE" ke dalam kode
+// ter-obfuscate oleh scripts/build.mjs (lihat __LICENSE_SECRET__/__LICENSE_SERVER__).
+// Jadi klien TIDAK perlu (dan tidak seharusnya) menaruh SECRET di .env mereka —
+// rahasia tersembunyi di dalam kode ter-obfuscate. Di mode dev (tanpa build),
+// baris `typeof` di bawah aman karena identifier-nya tak didefinisikan.
+const BAKED_SECRET = typeof __LICENSE_SECRET__ !== 'undefined' ? __LICENSE_SECRET__ : '';
+const BAKED_SERVER = typeof __LICENSE_SERVER__ !== 'undefined' ? __LICENSE_SERVER__ : '';
+const SECRET = BAKED_SECRET || process.env.LICENSE_SECRET || 'GANTI-DENGAN-SECRET-ACAK-KAMU-9f2a7c';
 
 const CACHE_FILE = './data/.lic';
 // Berapa lama bot boleh jalan tanpa berhasil kontak server (jam).
@@ -91,12 +98,17 @@ async function callServer({ key, server, fp, bot }) {
 // ---- Validasi utama ----
 export async function checkLicense({ botName = 'RahmatBot' } = {}) {
   const key = (process.env.LICENSE_KEY || '').trim();
-  const server = (process.env.LICENSE_SERVER || '').trim();
+  // Server: pakai yang di-bake saat build bila ada (klien tak bisa ganti),
+  // kalau tidak ada baru baca .env (mode dev).
+  const server = (BAKED_SERVER || process.env.LICENSE_SERVER || '').trim();
 
   // Mode "dev": bila LICENSE_KEY kosong DAN LICENSE_REQUIRED != true → izinkan
   // (supaya kamu bisa mengembangkan lokal tanpa server). Untuk deploy, WAJIB
   // set LICENSE_REQUIRED=true agar tidak bisa dilewati hanya dengan mengosongkan key.
-  const required = (process.env.LICENSE_REQUIRED || 'false') === 'true';
+  //
+  // PENTING: bila server di-BAKE (build produksi), enforcement DIPAKSA aktif —
+  // klien tidak bisa mematikannya lewat LICENSE_REQUIRED=false di .env mereka.
+  const required = !!BAKED_SERVER || (process.env.LICENSE_REQUIRED || 'false') === 'true';
   if (!key && !required) {
     log('LICENSE_KEY kosong & LICENSE_REQUIRED bukan true → mode dev (dilewati).');
     return { ok: true, dev: true };
@@ -145,7 +157,7 @@ export async function enforceLicense({ botName } = {}) {
 // ---- Heartbeat: server bisa mematikan bot dari jauh ----
 export function startHeartbeat({ botName, onInvalid } = {}) {
   const key = (process.env.LICENSE_KEY || '').trim();
-  const required = (process.env.LICENSE_REQUIRED || 'false') === 'true';
+  const required = !!BAKED_SERVER || (process.env.LICENSE_REQUIRED || 'false') === 'true';
   if (!key && !required) return;
   let fails = 0;
   setInterval(async () => {

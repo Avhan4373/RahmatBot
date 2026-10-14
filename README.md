@@ -140,7 +140,8 @@ src/settings.js → pengaturan runtime (/set, ganti QRIS) di data/settings.json
 src/qris.js    → kirim invoice + QRIS
 src/license.js → gerbang lisensi (obfuscation + cek online + heartbeat)
 scripts/build.mjs → build obfuscate (bundle → obfuscate → dist/bot.mjs)
-license-server/   → server lisensi (jalankan di VPS milikmu, lihat SECURITY.md)
+scripts/pack.mjs  → susun folder rilis siap-kirim (release/rahmatbot-client/)
+license-server/   → server lisensi (live di lisensi.avhanapp.my.id, lihat SECURITY.md)
 config.js      → baca .env
 data/products.json → contoh Canva, Netflix, dll (EDIT SESUAI TOKO)
 assets/qris.png    → GANTI dengan QRIS statis kamu
@@ -155,8 +156,10 @@ butuh gateway (Tripay/Xendit/Midtrans QRIS dinamis) — bisa ditambah nanti.
 Sebelum menyerahkan bot ke server milik orang lain, baca **[SECURITY.md](SECURITY.md)**.
 Ringkasnya:
 ```bash
-npm run build:secure     # bundle + obfuscate → dist/bot.mjs
-node dist/bot.mjs        # yang dijalankan di server klien (source src/ tidak dikirim)
+npm run build:secure     # bundle + obfuscate → dist/bot.mjs (rahasia di-bake)
+npm run pack             # susun release/rahmatbot-client/ (siap kirim ke klien)
+node dist/bot.mjs        # yang dijalankan (source src/ tidak pernah dikirim)
 ```
-Plus **server lisensi** (`license-server/`) yang kamu jalankan di VPS sendiri
-untuk memverifikasi & mematikan bot dari jauh. Detail lengkap di SECURITY.md.
+Plus **server lisensi** (`license-server/`) yang sudah live di
+`https://lisensi.avhanapp.my.id` untuk memverifikasi & mematikan bot dari jauh.
+Detail lengkap di SECURITY.md.
