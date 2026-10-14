@@ -42,5 +42,17 @@
     "desc": "Sharing aman, limit wajar.",
     "stock": [],
     "active": true
+  },
+  {
+    "id": "P06",
+    "name": "Melolo",
+    "price": 25000,
+    "desc": "Akun Melolo | stock:10",
+    "stock": [
+      "akun1",
+      "akun2",
+      "akun3"
+    ],
+    "active": true
   }
 ]

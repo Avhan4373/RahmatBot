@@ -66,12 +66,17 @@ USE_PAIRING_CODE=true
 - `/tolak ORDER-XXXX alasan` → tolak bukti
 - `/order` → 10 order terakhir
 - `/order ORDER-XXXX` → detail order
-- `/menu` → list produk + ID
+- `status` → ringkasan order pelanggan yang menunggu verifikasi
+- `/menu` → list produk + ID (`/produk` sama)
+- `/menu info P01` → detail produk + isi stok
 - `/menu add Nama | 25000 | deskripsi | stok:akun1,akun2` → tambah produk
+- `/menu edit P01 harga 30000` → ubah harga (nama/deskripsi/on/off)
 - `/menu del P01` → hapus produk
-- `/menu edit P01 harga 30000` → ubah harga/nama/deskripsi
-- `/stok P01 akun1,akun2` → tambah stok digital (dipakai untuk pengiriman otomatis)
+- `/stok P01 akun1,akun2` → tambah stok digital
+- `/stok lihat P01` → tampilkan isi stok bernomor
+- `/stok hapus P01 2` → hapus 1 item stok • `/stok kosong P01` → hapus semua
 - `/kirim ORDER-XXXX isi manual` → kirim manual jika stok kosong
+- `/help` → daftar perintah admin
 
 Format stok: tiap item dipisah koma. Saat ACC, 1 item stok diambil otomatis
 dan dikirim ke pelanggan. Jika stok habis, admin dikasih tahu untuk `/kirim` manual.
