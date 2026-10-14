@@ -50,12 +50,15 @@ npm start
 ## Konfigurasi (.env)
 ```
 BOT_NAME=RahmatBot
+STORE_NAME=Digital Store     # nama toko (struk & invoice)
 ADMIN_NUMBERS=6281234567890,6289876543210
 PHONE_NUMBER=6281234567890   # nomor WA bot (untuk pairing code, tanpa +)
 QRIS_IMAGE=./assets/qris.png
 QRIS_LABEL=RahmatBot • QRIS Statis
 USE_PAIRING_CODE=true
 ```
+> `BOT_NAME`, `STORE_NAME`, `QRIS_IMAGE`, `QRIS_LABEL` bisa diubah admin lewat
+> chat (`/set bot`, `/set toko`, `/qris`) tanpa restart — disimpan di `data/settings.json`.
 
 ## Perintah pelanggan
 - `halo`, `menu`, `start` → menu utama (klik tombol)
@@ -109,7 +112,18 @@ GROUP_WELCOME_TEXT=         # opsional: {{member}} {{group}} {{bot}}
 - `/stok lihat P01` → tampilkan isi stok bernomor
 - `/stok hapus P01 2` → hapus 1 item stok • `/stok kosong P01` → hapus semua
 - `/kirim ORDER-XXXX isi manual` → kirim manual jika stok kosong
+- `/set` → lihat pengaturan toko (nama bot, nama toko, label QRIS)
+- `/set bot Nama Baru` → ganti nama bot
+- `/set toko Nama Toko` → ganti nama toko (tampil di struk & invoice)
+- `/set qrislabel Label` → ganti label QRIS
+- `/set reset bot|toko|qrislabel` → kembalikan ke default `.env`
+- `/qris` → lihat gambar QRIS saat ini
+- `/qris ganti` → instruksi ganti QRIS
+- Kirim FOTO QRIS dengan caption `/qris` (atau reply foto + `/qris`) → ganti gambar QRIS
 - `/help` → daftar perintah admin
+
+**Pengaturan runtime:** perubahan `/set` & `/qris` disimpan di `data/settings.json`
+dan **langsung berlaku tanpa restart** (menimpa nilai `.env`).
 
 Format stok: tiap item dipisah koma. Saat ACC, 1 item stok diambil otomatis
 dan dikirim ke pelanggan. Jika stok habis, admin dikasih tahu untuk `/kirim` manual.
@@ -122,6 +136,7 @@ src/group.js   → logika grup: pemicu mention/prefix, katalog grup, sambutan me
 src/menus.js   → teks menu + tombol/list interaktif + fallback angka
 src/store.js   → JSON store: products, carts, orders
 src/admin.js   → command admin
+src/settings.js → pengaturan runtime (/set, ganti QRIS) di data/settings.json
 src/qris.js    → kirim invoice + QRIS
 config.js      → baca .env
 data/products.json → contoh Canva, Netflix, dll (EDIT SESUAI TOKO)

@@ -116,7 +116,7 @@ export async function handleMessage(sock, m) {
   // ===== 2) Command admin (/...) =====
   if (text.startsWith('/')) {
     if (!admin) return reply('⛔ Perintah khusus admin.');
-    return handleAdminCommand({ sock, from, text, reply });
+    return handleAdminCommand({ sock, from, text, reply, msg, content });
   }
 
   const t = lower(text);

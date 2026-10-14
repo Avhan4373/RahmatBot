@@ -44,7 +44,7 @@ export async function generateStruk(order) {
   }
 
   ctx.font = `bold 18px ${FONT}`;
-  ctx.fillText(config.botName.toUpperCase().slice(0, 24), W / 2, y);
+  ctx.fillText((config.storeName || config.botName).toUpperCase().slice(0, 24), W / 2, y);
   y += 25;
   ctx.font = `14px ${FONT}`;
   ctx.fillText('STRUK PEMBELIAN', W / 2, y);

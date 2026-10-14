@@ -194,11 +194,11 @@ export function cartActionList() {
   };
 }
 
-export function invoiceText(order, botName) {
+export function invoiceText(order, botName, storeName = '') {
   const lines = order.items.map(i => `• ${i.name} x${i.qty} = ${rupiah(i.price * i.qty)}`).join('\n');
   return (
 `━━[ *PEMBAYARAN QRIS* ]━━
-
+${storeName ? `🏬 *${storeName}*\n` : ''}
 *⌬ Order ID:* ${order.id}
 ${lines}
 

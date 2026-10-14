@@ -11,7 +11,7 @@ import { generateStruk } from './struk.js';
 
 // Kirim invoice + gambar QRIS statis + STRUK belanja ke pelanggan (pola SC)
 export async function sendInvoice(sock, order, quoted) {
-  const caption = invoiceText(order, config.botName) +
+  const caption = invoiceText(order, config.botName, config.storeName) +
     `\n\n🏦 *${config.qrisLabel}* (scan gambar di bawah)`;
 
   const imgPath = config.qrisImage;

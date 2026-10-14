@@ -1,6 +1,8 @@
 import fs from 'fs';
 import { resolveJid, jidToNumber } from './lids.js';
 import { config, rupiah } from '../config.js';
+import { getSetting, setSetting, clearSetting, allSettings } from './settings.js';
+import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import {
   getProducts, saveProducts, findProduct, nextProductId, addStock,
   getOrders, findOrder, updateOrder, takeStock,
@@ -8,8 +10,12 @@ import {
 
 const fmt = (n) => Number(n).toLocaleString('id-ID');
 
-// sog = send-or-get? handler passes { sock, from, reply }
-export async function handleAdminCommand({ sock, from, text, reply }) {
+// Path QRIS yang dipakai bot (bisa hasil upload admin).
+const qrisPath = () => config.qrisImage;
+const qrisExists = () => { try { return fs.existsSync(qrisPath()); } catch { return false; } };
+
+// sog = send-or-get? handler passes { sock, from, reply, msg, content }
+export async function handleAdminCommand({ sock, from, text, reply, msg, content }) {
   const [cmd, ...rest] = text.trim().split(/\s+/);
   const arg = rest.join(' ').trim();
   const c = cmd.toLowerCase();
@@ -226,6 +232,98 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     return reply('Terkirim.');
   }
 
+  // ===== PENGATURAN (nama bot / toko / label QRIS) =====
+  if (c === '/set' || c === '/setting' || c === '/pengaturan') {
+    // /set                  → lihat semua
+    // /set bot Nama Baru    → ganti nama bot
+    // /set toko Nama Toko   → ganti nama toko
+    // /set qrislabel Label  → ganti label QRIS
+    // /set reset <field>    → kembalikan ke default .env
+    const sub = (rest[0] || '').toLowerCase();
+    if (!sub || sub === 'lihat' || sub === 'list' || sub === 'info') {
+      const s = allSettings();
+      return reply(
+`⚙️ *PENGATURAN TOKO*
+
+🤖 Nama bot   : *${config.botName}*${s.botName ? ' _(kustom)_' : ''}
+🏬 Nama toko  : *${config.storeName}*${s.storeName ? ' _(kustom)_' : ''}
+🏦 Label QRIS : *${config.qrisLabel}*${s.qrisLabel ? ' _(kustom)_' : ''}
+🖼️ Gambar QRIS: ${qrisExists() ? '✅ terpasang' : '⚠️ belum ada'}
+
+*Ubah:*
+/set bot Nama Baru
+/set toko Nama Toko
+/set qrislabel Nama QRIS
+/qris — lihat & ganti gambar QRIS
+/set reset bot|toko|qrislabel — kembalikan default`);
+    }
+    if (sub === 'reset') {
+      const field = (rest[1] || '').toLowerCase();
+      const map = { bot: 'botName', botname: 'botName', namabot: 'botName', toko: 'storeName', store: 'storeName', namatoko: 'storeName', qrislabel: 'qrisLabel', label: 'qrisLabel' };
+      const key = map[field];
+      if (!key) return reply('Pakai: /set reset bot | /set reset toko | /set reset qrislabel');
+      clearSetting(key);
+      return reply(`↩️ *${field}* dikembalikan ke default: *${config[key]}*`);
+    }
+
+    const val = rest.slice(1).join(' ').trim();
+    const map = {
+      bot: 'botName', botname: 'botName', namabot: 'botName',
+      toko: 'storeName', store: 'storeName', namatoko: 'storeName', shop: 'storeName',
+      qrislabel: 'qrisLabel', label: 'qrisLabel', labelqris: 'qrisLabel',
+    };
+    const key = map[sub];
+    if (!key) return reply('Field: *bot* / *toko* / *qrislabel*\nContoh: /set bot RahmatStore');
+    if (!val) return reply(`Pakai: /set ${sub} <nilai baru>`);
+    if (val.length > 40) return reply('❌ Maksimal 40 karakter.');
+    setSetting(key, val);
+    const label = key === 'botName' ? 'Nama bot' : key === 'storeName' ? 'Nama toko' : 'Label QRIS';
+    return reply(`✅ ${label} diubah menjadi *${val}*.\n\nLihat: /set`);
+  }
+
+  // ===== GANTI GAMBAR QRIS =====
+  // /qris           → kirim gambar QRIS saat ini
+  // /qris ganti     → minta kirim foto QRIS baru
+  // (kirim/reply FOTO dengan caption "/qris" juga langsung mengganti)
+  if (c === '/qris') {
+    const sub = (rest[0] || '').toLowerCase();
+    // Foto bisa dari pesan ini (caption /qris) atau dari pesan yang di-reply.
+    const quotedImage = content?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+    const photoMsg = content?.imageMessage
+      ? msg
+      : (quotedImage ? { key: msg.key, message: content.extendedTextMessage.contextInfo.quotedMessage } : null);
+    if (photoMsg || sub === 'set' || sub === 'simpan') {
+      if (!photoMsg) return reply('📷 Kirim FOTO QRIS dengan caption */qris* untuk menggantinya.');
+      try {
+        const buf = await downloadMediaMessage(photoMsg, 'buffer', {});
+        if (!buf || !buf.length) throw new Error('gambar kosong');
+        fs.mkdirSync('./assets', { recursive: true });
+        const dest = './assets/qris-upload.png';
+        fs.writeFileSync(dest, buf);
+        setSetting('qrisImage', dest);
+        return reply(`✅ Gambar QRIS berhasil diganti (${Math.round(buf.length / 1024)} KB).\n\nCek: /qris`);
+      } catch (e) {
+        return reply('❌ Gagal menyimpan gambar QRIS: ' + e.message);
+      }
+    }
+    if (sub === 'ganti' || sub === 'ubah' || sub === 'change') {
+      return reply('📷 Kirim FOTO QRIS baru ke chat ini dengan caption */qris*\natau balas (reply) foto QRIS dengan */qris*.');
+    }
+    // default: kirim gambar QRIS sekarang
+    if (!qrisExists()) {
+      return reply('⚠️ Belum ada gambar QRIS.\nKirim FOTO QRIS dengan caption */qris* untuk memasang.');
+    }
+    try {
+      await sock.sendMessage(from, {
+        image: fs.readFileSync(qrisPath()),
+        caption: `🏦 *${config.qrisLabel}*\n\nIni QRIS yang dipakai bot saat ini.\nGanti: kirim foto QRIS baru dengan caption */qris*`,
+      }, { quoted: msg });
+      return;
+    } catch (e) {
+      return reply('❌ Gagal mengirim gambar QRIS: ' + e.message);
+    }
+  }
+
   if (c === '/help' || c === '/bantuan') {
     return reply(
 `🛠️ *PERINTAH ADMIN*
@@ -249,7 +347,15 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
 /stok P01 akun1,akun2 — tambah stok
 /stok lihat P01 — tampilkan isi stok
 /stok hapus P01 2 — hapus item nomor 2
-/stok kosong P01 — hapus semua stok`);
+/stok kosong P01 — hapus semua stok
+
+*Pengaturan toko:*
+/set — lihat pengaturan
+/set bot Nama Baru — ganti nama bot
+/set toko Nama Toko — ganti nama toko
+/set qrislabel Label — ganti label QRIS
+/set reset bot|toko|qrislabel — kembalikan default
+/qris — lihat / ganti gambar QRIS`);
   }
 
   return reply('Perintah admin tidak dikenal. Ketik /help');

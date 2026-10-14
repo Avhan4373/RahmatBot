@@ -9,3 +9,5 @@ data/orders.json
 data/carts.json
 data/lids.json
 data/polls.json
+data/settings.json
+assets/qris-upload.png

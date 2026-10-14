@@ -1,9 +1,14 @@
 import dotenv from 'dotenv';
+import { getSetting } from './src/settings.js';
 dotenv.config();
 
 const num = (v, d) => v ? v : d;
-export const config = {
+
+// Nilai default dari .env. Sebagian bisa DITIMPA admin lewat chat
+// (data/settings.json) tanpa restart — lihat getter di bawah.
+const env = {
   botName: num(process.env.BOT_NAME, 'RahmatBot'),
+  storeName: num(process.env.STORE_NAME, 'Digital Store'),
   adminNumbers: (process.env.ADMIN_NUMBERS || '')
     .split(',')
     .map(s => s.trim().replace(/^\+/, '').replace(/\D/g, ''))
@@ -14,18 +19,30 @@ export const config = {
   qrisLabel: process.env.QRIS_LABEL || 'QRIS Statis',
 
   // ==== Fitur grup ====
-  // Bot aktif di grup mana pun ia diundang (default). Set false untuk matikan total.
   groupEnabled: (process.env.GROUP_ENABLED || 'true') === 'true',
-  // Di grup, bot hanya merespons bila di-tag/mention, diawali prefix, atau
-  // menjawab pesan bot (reply). Prefix default: titik.
   groupPrefix: process.env.GROUP_PREFIX || '.',
-  // Whitelist ID grup (kosong = semua grup). Contoh: 1203630xxxx@g.us,1203631yyyy@g.us
   groupWhitelist: (process.env.GROUP_WHITELIST || '')
     .split(',').map(s => s.trim()).filter(Boolean),
-  // Sambutan otomatis member baru masuk / pamit saat keluar.
   groupWelcome: (process.env.GROUP_WELCOME || 'true') === 'true',
-  // Template sambutan kustom (opsional). Placeholder: {{member}} {{group}} {{bot}}
   groupWelcomeText: process.env.GROUP_WELCOME_TEXT || '',
+};
+
+export const config = {
+  // --- bisa diubah admin via chat (getter membaca override runtime) ---
+  get botName() { return getSetting('botName') ?? env.botName; },
+  get storeName() { return getSetting('storeName') ?? env.storeName; },
+  get qrisImage() { return getSetting('qrisImage') ?? env.qrisImage; },
+  get qrisLabel() { return getSetting('qrisLabel') ?? env.qrisLabel; },
+
+  // --- hanya dari .env (perlu restart bila diubah) ---
+  adminNumbers: env.adminNumbers,
+  phoneNumber: env.phoneNumber,
+  usePairingCode: env.usePairingCode,
+  groupEnabled: env.groupEnabled,
+  groupPrefix: env.groupPrefix,
+  groupWhitelist: env.groupWhitelist,
+  groupWelcome: env.groupWelcome,
+  groupWelcomeText: env.groupWelcomeText,
 };
 
 export const toJid = (num62) => `${num62}@s.whatsapp.net`;
