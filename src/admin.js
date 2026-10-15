@@ -584,15 +584,20 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
 /menu — daftar produk
 /menu info P01 — detail + isi stok
 /menu add Nama | 25000 | deskripsi | stok:a,b
-/menu edit P01 harga 30000 — (nama/deskripsi/on/off)
-/menu del P01 — hapus produk
+/menu edit P01 harga 30000 — nama/deskripsi/on/off
+/menu del P01 | P01,P02,P03 | all confirm
+/menu variants P01 — list varian
+/menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
+add varians 1 Bulan 1500 10; Canva Head 7000 22
+add varians 1 Bulan:1500:akun1,akun2
 /produk — sama dengan /menu
 
 *Stok digital:*
-/stok P01 akun1,akun2 — tambah stok
+/stok P01 akun1,akun2 — tambah stok biasa
+/stok P01 1 Bulan:akun1,akun2 — tambah stok varian
 /stok lihat P01 — tampilkan isi stok
-/stok hapus P01 2 — hapus item nomor 2
-/stok kosong P01 — hapus semua stok
+/stok hapus P01 2 — hapus 1 item
+/stok kosong P01 — kosongkan stok
 
 *Pengaturan toko:*
 /set — lihat pengaturan

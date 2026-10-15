@@ -67,42 +67,85 @@ Pilih menu di bawah (klik tombol):
 }
 
 export const ADMIN_HELP_TEXT =
-`[ADMIN {{BOT}}]
+`[ADMIN PANEL {{BOT}}]
 
-*Order:*
-/acc ORDER-XXXX — lunaskan + kirim stok otomatis
-/tolak ORDER-XXXX alasan — tolak bukti
-/order — 10 order terakhir
-/order ORDER-XXXX — detail order
-status — order pelanggan yang menunggu
-/kirim ORDER-XXXX isi — kirim produk manual
+1) ORDER
+- ACC order:
+  /acc ORDER-XXXX
+  → lunaskan order + kirim stok otomatis
+- Tolak order:
+  /tolak ORDER-XXXX alasan
+- Daftar order:
+  /order
+  /order ORDER-XXXX
+- Status order:
+  status
+- Kirim manual:
+  /kirim ORDER-XXXX isi
 
-*Produk:*
-/menu — daftar • /menu info P01 — detail + stok
-/menu add Nama | 25000 | deskripsi | stok:a,b
-atau langsung: add Nama 25000 deskripsi stok:a,b
-/menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
-atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
-/menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
-atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
-/menu edit P01 harga 30000 — (nama/deskripsi/on/off)
-/menu del P01 — hapus produk
-/menu del P01,P02,P03 — hapus banyak
-/menu del all confirm — hapus semua produk
+2) PRODUK
+- Daftar:
+  /menu  atau  /produk
+- Detail:
+  /menu info P01
+- Tambah produk:
+  /menu add Nama | Harga | deskripsi opsional | stok:a,b
+  atau: add Nama 25000 deskripsi stok:a,b
+  contoh no harga awal: add Canva Pro
+- Edit produk:
+  /menu edit P01 harga 30000
+  field: harga | nama | deskripsi | on | off
+- Hapus produk:
+  /menu del P01
+  /menu del P01,P02,P03
+  /menu del all confirm
+- Variasi:
+  lihat:
+    /menu variants P01
+    atau: variants P01
+  set/update (merge, tidak menghapus varians lain):
+    /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
+    add varians 1 Bulan 1500 10; Canva Head 7000 22
+  catatan:
+    - jika varian sudah ada, stock ditambah
+    - varian yang tidak disebutkan tetap aman
 
-*Stok:*
-/stok P01 akun1,akun2 — tambah
-/stok lihat P01 — tampilkan isi
-/stok hapus P01 2 — hapus 1 item
-/stok kosong P01 — hapus semua
+3) STOK
+- Produk biasa:
+  /stok P01 akun1,akun2
+  /stok lihat P01
+  /stok hapus P01 2
+  /stok kosong P01
+- Produk varian:
+  /stok lihat P01
+  /stok lihat P01 1 Bulan
+  /stok P01 1 Bulan:akun1,akun2
+  /stok kosong P01 1 Bulan
+  /stok hapus P01 1 Bulan 2
+- Pesan alur varian:
+  varian P01 1 Bulan
+  beli P01 1 Bulan 2
+  beli P01 2
 
-*Pengaturan toko:*
-/set — lihat pengaturan
-/set bot Nama Baru — ganti nama bot
-/set toko Nama Toko — ganti nama toko
-/set qrislabel Label — ganti label QRIS
-/set reset bot|toko|qrislabel — kembalikan default
-/qris — lihat / ganti gambar QRIS`;
+4) PENGATURAN TOKO
+- Lihat:
+  /set
+- Ubah:
+  /set bot Nama Baru
+  /set toko Nama Toko
+  /set qrislabel Label
+  /set reset bot|toko|qrislabel
+- QRIS:
+  /qris (lihat)
+  /qris ganti (kirim foto caption /qris)
+
+5) PERCEPATAN ORDER
+- Detail:
+  detail P01  atau  P01
+- Katalog:
+  Katalog / menu
+- Bantuan:
+  help / bantuan / ?`;
 
 export const HELP_TEXT =
 `❓ *Bantuan {{BOT}}*
