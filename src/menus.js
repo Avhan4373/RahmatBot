@@ -116,9 +116,11 @@ katalog → klik Canva → pilih 2 → checkout → bayar → kirim foto bukti �
 export function catalogList() {
   const ps = getProducts().filter(p => p.active !== false);
   const rows = ps.map((p, i) => ({
-    title: `${i + 1}. ${p.name.toUpperCase()}`.slice(0, 24),
+    title: p.name.toUpperCase().slice(0, 24),
     rowId: `detail ${p.id}`,
-    description: `Harga ${rupiah(p.price)} | Stok ${p.stock?.length ?? 0}`.slice(0, 70),
+    description: (p.variants?.length
+      ? `Pilih variasi (${p.variants.length})`
+      : `Harga ${rupiah(p.price)} | Stok ${p.stock?.length ?? 0}`).slice(0, 70),
   }));
   const text = 'Semua produk ready & bisa langsung diproses. Silakan pilih produk yang ingin kamu beli.';
   return {
