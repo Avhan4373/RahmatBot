@@ -7,7 +7,7 @@ import {
 } from './store.js';
 import {
   MAIN_MENU_TEXT, HELP_TEXT, ADMIN_HELP_TEXT, mainMenuList, catalogList, catalogText,
-  productQtyList, productDetailText, cartText, cartActionList,
+  productQtyList, productQtyVariantList, productVariantList, productDetailText, cartText, cartActionList,
 } from './menus.js';
 import { sendInvoice, forwardProofToAdmins } from './qris.js';
 import { handleAdminCommand } from './admin.js';
@@ -210,15 +210,33 @@ export async function handleMessage(sock, m) {
   }
 
   // ===== 4) Detail produk: "detail P01" (opsi list katalog) / "#detail P01" / "P01" =====
+  let mVar = /^(?:#?varian(?:t)?|variasi)\s+(P\d+)\s+(.+)$/i.exec(text);
+  if (mVar) {
+    const p = findProduct(mVar[1]);
+    if (!p) return reply(`❌ Produk ${mVar[1]} tidak ditemukan.`);
+    if (!(p.variants && p.variants.length)) {
+      return reply(`Produk ${p.id} tidak punya variasi. Ketik *beli ${p.id}*.`);
+    }
+    const v = findVariant(p, mVar[2].trim());
+    if (!v) return reply(`Variasi tidak ditemukan.\n` + (p.variants || []).map(x => `• ${x.name}`).join('\n'));
+    return sendMenuPoll(sock, from, productQtyVariantList(p, v.name), msg);
+  }
+
   let mDetail = /^(?:#?detail|info|lihat)\s+(P\d+)/i.exec(text);
   if (mDetail) {
     const p = findProduct(mDetail[1]);
     if (!p) return reply(`❌ Produk ${mDetail[1]} tidak ditemukan.`);
+    if (Array.isArray(p.variants) && p.variants.length) {
+      return sendMenuPoll(sock, from, productVariantList(p), msg);
+    }
     return sendMenuPoll(sock, from, productQtyList(p), msg);
   }
   if (/^P\d+$/i.test(text)) {
     const p = findProduct(text.toUpperCase());
     if (!p) return reply('❌ Produk tidak ditemukan. Ketik *katalog*.');
+    if (Array.isArray(p.variants) && p.variants.length) {
+      return sendMenuPoll(sock, from, productVariantList(p), msg);
+    }
     return sendMenuPoll(sock, from, productQtyList(p), msg);
   }
 
