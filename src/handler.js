@@ -277,7 +277,7 @@ export async function handleMessage(sock, m) {
       const p = findProduct(it.id);
       if (!p) continue;
       detail.push({ id: p.id, name: it.name || p.name, variant: it.variant || null, price: (it.price != null ? it.price : p.price), qty: it.qty });
-      total += p.price * it.qty;
+      total += (it.price != null ? it.price : p.price) * it.qty;
     }
     if (!detail.length) return reply('❌ Produk di keranjang tidak valid.');
     const order = createOrder({ userJid: from, userName: pushName, items: detail, total });
