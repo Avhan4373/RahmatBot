@@ -161,10 +161,15 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
         if (priceIdx < 1) return reply('Format: /menu add Nama Harga deskripsi (stok:a,b)\nContoh: /menu add Canva Pro 15000 invite 1 bulan stok:akun1,akun2');
         name = tokens.slice(0, priceIdx).join(' ');
         priceStr = tokens[priceIdx];
-        for (const t of tokens.slice(priceIdx + 1)) {
-          const m = /^stok:(.*)$/i.exec(t);
-          if (m) stok = stok.concat(m[1].split(',').map(x => x.trim()).filter(Boolean));
-          else desc = (desc ? desc + ' ' : '') + t;
+        const priceToken = tokens[priceIdx];
+        const afterPrice = payload.slice(payload.toLowerCase().indexOf(priceToken.toLowerCase()) + priceToken.length).trim();
+        const stokMatch = /(?:^|\s)stok:(.+)$/is.exec(afterPrice);
+        if (stokMatch) {
+          const seg = stokMatch[1].trim();
+          stok = stok.concat(seg.split(',').map(x => x.trim()).filter(Boolean));
+          desc = afterPrice.slice(0, stokMatch.index).trim();
+        } else {
+          desc = afterPrice.trim();
         }
       }
 

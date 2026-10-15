@@ -186,7 +186,7 @@ export async function handleMessage(sock, m) {
   if (admin && !text.startsWith('/')) {
     const cleaned = text.replace(/^[\.\s\/]+/, '').trim();
     const first = (cleaned.split(/\s+/)[0] || '').toLowerCase();
-    const restAll = cleaned.split(/\s+/).slice(1).join(' ').trim();
+    const restAll = text.replace(/^\S+\s*/, '').trim(); // preserve newline (multiline desc)
     const alias = {
       add: '/menu add',
       tambah: '/menu add',
