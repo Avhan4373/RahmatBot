@@ -1,5 +1,5 @@
 import { config, rupiah } from '../config.js';
-import { getProducts, findProduct } from './store.js';
+import { getProducts, findProduct, soldCount } from './store.js';
 
 // ===== Identitas bot =====
 // sock.user bisa berupa {id, lid, jid}. Ambil semua varian nomor (tanpa device ":x")
@@ -180,18 +180,21 @@ export function groupProductText(id) {
     return `❌ Produk *${id}* tidak ditemukan.\nKetik *${p}katalog* untuk lihat daftar produk.`;
   }
   const ready = (prod.stock?.length ?? 0) > 0;
+  const sold = soldCount(prod.id);
+  const desc = (prod.desc || '').trim() || 'Tidak ada deskripsi.';
   return (
-`📦 *DETAIL PRODUK*
-━━━━━━━━━━━━━━━━━━
+`╭──────────────
+┊・Produk : ${prod.name}
+┊・Stok Terjual : ${sold}
+╰──────────────
 
-*${prod.name}*
+${desc}
+
+━━━━━━━━━━━━━━━━━━
 🔖 ID Produk : *${prod.id}*
 💰 Harga     : *${rupiah(prod.price)}*
 📦 Stok      : ${stockBadge(prod)}
-📝 Deskripsi :
-   ${prod.desc || 'Tidak ada deskripsi.'}
 
-━━━━━━━━━━━━━━━━━━
 🛒 *CARA ORDER:*
 1️⃣ Ketik *${p}caraorder* untuk buka chat pribadi
 2️⃣ Di chat pribadi ketik *beli ${prod.id}*
@@ -215,7 +218,7 @@ kamu untuk order dengan aman.
 *📋 PERINTAH TERSEDIA:*
 ┃ 🔍  *${p}katalog*      — semua produk
 ┃ 🧾  *${p}detail P01*   — rincian produk
-┃ 🛒  *${p}caraorder*    — cara beli
+┃ 🛒  *${p}caraorder*     — cara beli
 ┃ 🤖  *${p}menu*         — menu utama
 
 ━━━━━━━━━━━━━━━━━━

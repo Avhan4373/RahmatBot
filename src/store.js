@@ -116,6 +116,18 @@ export function userOrders(jid, limit = 5) {
   return getOrders().filter(o => o.userJid === jid).slice(-limit).reverse();
 }
 
+export function soldCount(productId) {
+  const orders = read(ORDERS_FILE, []);
+  let n = 0;
+  for (const o of orders) {
+    if (o.status === 'BATAL') continue;
+    for (const it of o.items || []) {
+      if (String(it.id).toLowerCase() === String(productId).toLowerCase()) n += Number(it.qty || 0);
+    }
+  }
+  return n;
+}
+
 export function pendingPaymentOrder(jid) {
   const list = getOrders().filter(o =>
     o.userJid === jid && ['MENUNGGU_BAYAR', 'PENDING_VERIF'].includes(o.status));

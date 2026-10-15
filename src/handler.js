@@ -92,7 +92,7 @@ export async function handleMessage(sock, m) {
   }
 
   const admin = isAdminJid(from, msg.key, config.adminNumbers);
-  console.log('[DBG isAdmin]', admin, 'nums=', config.adminNumbers, 'from=', from, 'firstText=', text.slice(0, 20));
+
   const hasImage = !!content.imageMessage;
 
 
@@ -187,7 +187,6 @@ export async function handleMessage(sock, m) {
     const cleaned = text.replace(/^[\.\s\/]+/, '').trim();
     const first = (cleaned.split(/\s+/)[0] || '').toLowerCase();
     const restAll = cleaned.split(/\s+/).slice(1).join(' ').trim();
-    console.log('DBG vars cleaned=%j first=%j restAll=%j', cleaned, first, restAll);
     const alias = {
       add: '/menu add',
       tambah: '/menu add',
@@ -202,7 +201,6 @@ export async function handleMessage(sock, m) {
       setting: '/set',
       pengaturan: '/set',
     }[first];
-    console.log('[DBG alias2]', JSON.stringify({ first, hasAlias: !!alias, restAll }));
     if (alias) {
       return handleAdminCommand({ sock, from, text: (restAll ? alias + ' ' + restAll : alias), reply, msg, content });
     }
