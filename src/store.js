@@ -38,10 +38,28 @@ export function nextProductId() {
 }
 
 // stok: array of string (akun/kode/voucher). Saat order lunas, shift 1 item.
-export function takeStock(productId) {
+export function findVariant(p, query) {
+  if (!p || !Array.isArray(p.variants) || !p.variants.length) return null;
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return p.variants[0];
+  let v = p.variants.find(x => String(x.name || '').toLowerCase() === q);
+  if (v) return v;
+  v = p.variants.find(x => String(x.name || '').toLowerCase().includes(q) || q.includes(String(x.name || '').toLowerCase()));
+  return v || null;
+}
+
+export function takeStock(productId, variantName = null) {
   const all = getProducts();
   const p = all.find(x => x.id.toLowerCase() === String(productId).toLowerCase());
-  if (!p || !Array.isArray(p.stock) || p.stock.length === 0) return null;
+  if (!p) return null;
+  if (Array.isArray(p.variants) && p.variants.length) {
+    const v = findVariant(p, variantName);
+    if (!v || !Array.isArray(v.stock) || v.stock.length === 0) return null;
+    const item = v.stock.shift();
+    write(PRODUCTS_FILE, all);
+    return item;
+  }
+  if (!Array.isArray(p.stock) || p.stock.length === 0) return null;
   const item = p.stock.shift();
   write(PRODUCTS_FILE, all);
   return item;

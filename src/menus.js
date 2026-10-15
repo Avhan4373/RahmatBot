@@ -80,6 +80,7 @@ status — order pelanggan yang menunggu
 *Produk:*
 /menu — daftar • /menu info P01 — detail + stok
 /menu add Nama | 25000 | deskripsi | stok:a,b
+/menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
 /menu edit P01 harga 30000 — (nama/deskripsi/on/off)
 /menu del P01 — hapus produk
 
@@ -178,9 +179,11 @@ export function cartText(jid) {
   for (const it of items) {
     const p = findProduct(it.id);
     if (!p) continue;
-    const sub = p.price * it.qty;
+    const name = it.name || p.name;
+    const price = (it.price != null) ? it.price : p.price;
+    const sub = price * it.qty;
     total += sub;
-    t += `\n• ${p.name} (${p.id}) x${it.qty} = *${rupiah(sub)}*`;
+    t += `\n• ${name} (${p.id}) x${it.qty} = *${rupiah(sub)}*`;
   }
   t += `\n\n💰 *Total: ${rupiah(total)}*`;
   t += `\n\nKetik: *checkout* untuk bayar • *hapus P01* untuk hapus item • *batal* untuk kosongkan.`;

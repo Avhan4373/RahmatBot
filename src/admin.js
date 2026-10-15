@@ -31,7 +31,7 @@ export async function handleAdminCommand({ sock, from, text, reply, msg, content
     let delivered = [];
     for (const it of order.items) {
       for (let k = 0; k < it.qty; k++) {
-        const item = takeStock(it.id);
+        const item = takeStock(it.id, it.variant || null);
         if (item) delivered.push(`• ${it.name}: ${item}`);
       }
     }
@@ -176,6 +176,35 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       ps.push({ id, name, price, desc, stock: stok, active: true });
       saveProducts(ps);
       return reply(`✅ Produk ditambah:\n• ID: ${id}\n• Nama: ${name}\n• Harga: Rp${fmt(price)}\n• Deskripsi: ${desc || '-'}\n• Stok: ${stok.length} item\n\nLihat: /menu info ${id}`);
+    }
+    if (sub === 'variants' || sub === 'variasi' || sub === 'variant') {
+      const id = rest[1];
+      if (!id) return reply('Pakai: /menu variants P01\\nSet: /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3,akun4');
+      const p = findProduct(id);
+      if (!p) return reply(`\\u274c Produk ${id} tidak ditemukan.`);
+      const afterId = text.slice(text.toLowerCase().indexOf(id.toLowerCase()) + id.length).trim();
+      if (!afterId || afterId.toLowerCase() === 'list') {
+        const vs = p.variants || [];
+        if (!vs.length) return reply(`\\u1f4cb Variasi ${p.id} masih kosong.\\nSet: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3`);
+        return reply(`\\u1f4cb *Variasi ${p.id} (${p.name}):*\\n` + vs.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock?.length ?? 0})`).join('\\n'));
+      }
+      const spec = afterId.replace(/^set\\s+/i, '').trim();
+      const segments = spec.split('|').map(s => s.trim()).filter(Boolean);
+      const variants = [];
+      for (const seg of segments) {
+        const [name, priceStr, stockStr] = seg.split(':');
+        const price = parseInt(String(priceStr || '').replace(/\\D/g, ''), 10);
+        const stock = stockStr ? stockStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (name && price > 0) variants.push({ name: name.trim(), price, stock });
+      }
+      if (!variants.length) return reply('Format: /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3,akun4');
+      const ps = getProducts();
+      const t = ps.find(x => x.id === p.id);
+      t.variants = variants;
+      t.price = Math.min(...variants.map(v => v.price));
+      t.stock = [];
+      saveProducts(ps);
+      return reply(`\\u2705 Variasi ${t.id} diset:\\n` + variants.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
     }
     if (sub === 'del' || sub === 'hapus' || sub === 'delete') {
       const id = rest[1];

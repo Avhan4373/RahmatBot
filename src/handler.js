@@ -2,7 +2,7 @@ import fs from 'fs';
 import { config } from '../config.js';
 import { learnFromMessage, isAdminJid, jidToNumber } from './lids.js';
 import {
-  getProducts, findProduct, getCart, setCart, clearCart,
+  getProducts, findProduct, findVariant, getCart, setCart, clearCart,
   createOrder, findOrder, updateOrder, userOrders, pendingPaymentOrder, getOrders,
 } from './store.js';
 import {
@@ -194,6 +194,9 @@ export async function handleMessage(sock, m) {
       hapus: '/menu hapus',
       delete: '/menu delete',
       edit: '/menu edit',
+      variants: '/menu variants',
+      varians: '/menu variants',
+      variates: '/menu variants',
       stok: '/stok',
       tolak: '/tolak',
       kirim: '/kirim',
@@ -220,8 +223,15 @@ export async function handleMessage(sock, m) {
   }
 
   // ===== 5) Beli: "beli P01" / "beli P01 2" / "#buy P01,2" (format SC) =====
-  let mBuy = /^(?:#?beli|#?buy|order)\s+(P\d+)(?:[\s,]+(\d+))?/i.exec(text);
-  if (mBuy) return addToCart(sock, from, reply, msg, mBuy[1], parseInt(mBuy[2] || '1', 10));
+  let mBuy = /^(?:#?beli|#?buy|order)\s+(P\d+)(?:\s+(.*))?$/i.exec(text);
+  if (mBuy) {
+    const pid = mBuy[1];
+    let restBuy = (mBuy[2] || '').trim();
+    let qty = 1;
+    const qm = /\s+(\d+)\s*$/.exec(restBuy);
+    if (qm) { qty = parseInt(qm[1], 10) || 1; restBuy = restBuy.slice(0, qm.index).trim(); }
+    return addToCart(sock, from, reply, msg, pid, restBuy || null, qty);
+  }
 
   let mHapus = /^(?:hapus|remove|del)\s+(P\d+)/i.exec(text);
   if (mHapus) {
@@ -238,7 +248,7 @@ export async function handleMessage(sock, m) {
     for (const it of items) {
       const p = findProduct(it.id);
       if (!p) continue;
-      detail.push({ id: p.id, name: p.name, price: p.price, qty: it.qty });
+      detail.push({ id: p.id, name: it.name || p.name, variant: it.variant || null, price: (it.price != null ? it.price : p.price), qty: it.qty });
       total += p.price * it.qty;
     }
     if (!detail.length) return reply('❌ Produk di keranjang tidak valid.');
@@ -263,19 +273,38 @@ export async function handleMessage(sock, m) {
 `Maaf, saya tidak paham "${text}".\nKetik *menu* untuk tombol yang bisa diklik, atau *bantuan*.`);
 }
 
-async function addToCart(sock, from, reply, quoted, productId, qty = 1) {
+async function addToCart(sock, from, reply, quoted, productId, variant = null, qty = 1) {
   qty = Math.min(Math.max(qty || 1, 1), 99);
   const p = findProduct(productId);
   if (!p || p.active === false) {
     await reply(`❌ Produk ${productId} tidak tersedia. Ketik *katalog*.`);
     return;
   }
+  if (Array.isArray(p.variants) && p.variants.length) {
+    const v = findVariant(p, variant);
+    if (!v) {
+      const list = p.variants.map((x, i) => `${i + 1}. *${x.name}* - ${rupiah(x.price)} (stok ${x.stock?.length ?? 0})`).join('\n');
+      await reply(`Pilih variasi terlebih dulu:\n${list}\n\nKetik: *beli ${p.id} <nama variasi> ${qty}*`);
+      return;
+    }
+    variant = v.name;
+    if ((v.stock?.length ?? 0) < qty) {
+      await reply(`⚠️ Stok variasi *${v.name}* tinggal ${v.stock?.length ?? 0}.`);
+    }
+  } else if (variant) {
+    variant = null;
+  }
+
+  const chosen = p.variants?.length ? findVariant(p, variant) : null;
+  const price = chosen ? chosen.price : p.price;
+  const itemName = chosen ? `${p.name} - ${chosen.name}` : p.name;
+
   const items = getCart(from);
-  const ex = items.find(i => i.id.toLowerCase() === p.id.toLowerCase());
+  const ex = items.find(i => i.id.toLowerCase() === p.id.toLowerCase() && (i.variant || null) === (variant || null));
   if (ex) ex.qty = Math.min(ex.qty + qty, 99);
-  else items.push({ id: p.id, qty });
+  else items.push({ id: p.id, variant: variant || null, name: itemName, price, qty });
   setCart(from, items);
-  await reply(`✅ *${p.name}* x${qty} masuk keranjang!\n\n${cartText(from)}`);
+  await reply(`✅ *${itemName}* x${qty} masuk keranjang!\n\n${cartText(from)}`);
   await sendMenuPoll(sock, from, cartActionList(), quoted);
 }
 
