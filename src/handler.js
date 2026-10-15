@@ -188,6 +188,8 @@ export async function handleMessage(sock, m) {
     const first = (cleaned.split(/\s+/)[0] || '').toLowerCase();
     const restAll = text.replace(/^\S+\s*/, '').trim(); // preserve newline (multiline desc)
     const alias = {
+      menu: '/menu',
+      produk: '/menu',
       add: '/menu add',
       tambah: '/menu add',
       variants: '/menu variants',

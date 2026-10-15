@@ -264,12 +264,38 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       return reply(`\\u2705 Variasi ${t.id} diset:\\n` + variants.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
     }
     if (sub === 'del' || sub === 'hapus' || sub === 'delete') {
-      const id = rest[1];
-      if (!id) return reply('Pakai: /menu del P01');
-      const p = findProduct(id);
-      if (!p) return reply(`❌ Produk ${id} tidak ditemukan. Lihat daftar: /menu`);
-      saveProducts(getProducts().filter(x => x.id !== p.id));
-      return reply(`🗑️ Dihapus: ${p.id} — ${p.name} (stok ${p.stock?.length ?? 0} ikut terhapus)`);
+      const raw = (rest[1] || '').trim();
+      if (!raw) return reply('Pakai: /menu del P01\nHapus banyak: /menu del P01,P02,P03\nHapus semua: /menu del all confirm');
+
+      // Bersihkan produk (semua) dengan konfirmasi eksplisit.
+      if (/^(all|semua)$/.test(raw.toLowerCase())) {
+        if ((rest[2] || '').toLowerCase() !== 'confirm') {
+          const n = getProducts().length;
+          return reply(`⚠️ Hapus semua produk? (${n} produk)\nKonfirmasi: /menu del all confirm`);
+        }
+        const removed = getProducts();
+        saveProducts([]);
+        return reply(`🗑️ Semua produk dihapus (${removed.length} item).`);
+      }
+
+      const ids = raw.split(',').map(x => x.trim()).filter(Boolean);
+      if (!ids.length) return reply('Pakai: /menu del P01');
+
+      const ps = getProducts();
+      const found = [];
+      const missing = [];
+      for (const id of ids) {
+        const p = ps.find(x => x.id.toLowerCase() === id.toLowerCase());
+        if (p) found.push(p);
+        else missing.push(id);
+      }
+      const foundIds = found.map(p => p.id.toLowerCase());
+      const next = ps.filter(x => !foundIds.includes(x.id.toLowerCase()));
+      saveProducts(next);
+      const lines = found.map(p => `🗑️ ${p.id} — ${p.name} (stok ${(p.stock?.length ?? 0) + (p.variants || []).reduce((a, v) => a + (v.stock?.length ?? 0), 0)} ikut terhapus)`);
+      if (missing.length) lines.push('Tidak ditemukan: ' + missing.join(', '));
+      lines.push(`Sisa produk: ${next.length}`);
+      return reply(lines.join('\n'));
     }
     if (sub === 'edit') {
       // /menu edit P01 harga 30000 | nama X | deskripsi X | on | off

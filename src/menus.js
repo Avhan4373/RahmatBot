@@ -87,6 +87,8 @@ atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
 atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
 /menu edit P01 harga 30000 — (nama/deskripsi/on/off)
 /menu del P01 — hapus produk
+/menu del P01,P02,P03 — hapus banyak
+/menu del all confirm — hapus semua produk
 
 *Stok:*
 /stok P01 akun1,akun2 — tambah
