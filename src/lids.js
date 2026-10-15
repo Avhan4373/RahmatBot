@@ -47,8 +47,15 @@ export function resolveJid(number) {
 
 // true bila pengirim adalah admin (bisa dikenali via nomor, @lid, atau senderPn)
 export function isAdminJid(jid, key, adminNumbers) {
-  const n = jidToNumber(jid, key);
-  return adminNumbers.includes(n);
+  const nums = new Set();
+  // 1) senderPn / participantPn (bila cocok)
+  const fromPn = (key?.senderPn || key?.participantPn || '');
+  if (fromPn) nums.add(fromPn.split('@')[0].split(':')[0].replace(/\\D/g, ''));
+  // 2) pemetaan @lid yang sudah dipelajari
+  nums.add(jidToNumber(jid, key));
+  // 3) nomor mentah dari lid (kadang cocok)
+  nums.add(String(jid || '').split('@')[0].split(':')[0].replace(/\\D/g, ''));
+  return [...nums].some(n => n && adminNumbers.includes(n));
 }
 export function jidToNumber(jid, key) {
   const numOf = (j) => (j || '').split('@')[0].split(':')[0].replace(/\D/g, '');

@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "build:secure": "node scripts/build.mjs",
+    "build:prod": "BAKE_LICENSE=true node scripts/build.mjs",
     "pack": "node scripts/pack.mjs",
     "start:secure": "node dist/bot.mjs"
   },

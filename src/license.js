@@ -109,6 +109,12 @@ export async function checkLicense({ botName = 'RahmatBot' } = {}) {
   // PENTING: bila server di-BAKE (build produksi), enforcement DIPAKSA aktif —
   // klien tidak bisa mematikannya lewat LICENSE_REQUIRED=false di .env mereka.
   const required = !!BAKED_SERVER || (process.env.LICENSE_REQUIRED || 'false') === 'true';
+  // Mode dev (tidak bake / tidak wajib): lisensi dilewati, agar tidak memaksa
+  // pengisian LICENSE_SERVER di tahap development.
+  if (!required && (!key || !server)) {
+    log('Mode dev (lisensi tidak wajib) → dilewati.');
+    return { ok: true, dev: true };
+  }
   if (!key && !required) {
     log('LICENSE_KEY kosong & LICENSE_REQUIRED bukan true → mode dev (dilewati).');
     return { ok: true, dev: true };
@@ -158,7 +164,7 @@ export async function enforceLicense({ botName } = {}) {
 export function startHeartbeat({ botName, onInvalid } = {}) {
   const key = (process.env.LICENSE_KEY || '').trim();
   const required = !!BAKED_SERVER || (process.env.LICENSE_REQUIRED || 'false') === 'true';
-  if (!key && !required) return;
+  if (!required && (!key || !server)) return; // mode dev
   let fails = 0;
   setInterval(async () => {
     const r = await checkLicense({ botName });

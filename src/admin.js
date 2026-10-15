@@ -39,9 +39,36 @@ export async function handleAdminCommand({ sock, from, text, reply, msg, content
       ? `🎁 *Produk kamu:*\n${delivered.join('\n')}\n\nSimpan baik-baik ya. Komplain? Balas chat ini.`
       : `⚠️ Stok otomatis kosong, admin akan kirim manual segera. Tunggu ya 🙏.`;
 
-    await sock.sendMessage(order.userJid, {
-      text: `✅ *${order.id} LUNAS!* Terima kasih 🙏\n💰 ${rupiah(order.total)}\n\n${produkMsg}`,
-    });
+    const paidAt = new Date().toLocaleString('id-ID', {
+      day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
+    }).replace('.', ':');
+
+    const detailLines = delivered.length
+      ? delivered.map((d, i) => `${i + 1}.\n${String(d).replace(/^•\\s*/, '• ')}`).join('\n')
+      : '• (stok kosong, admin kirim manual)';
+
+    const successMsg =
+`╭────〔 TRANSAKSI SUKSES 〕─
+
+┊・Pay ID : ${order.id}
+┊・Kode Unik : ${order.id}
+┊・Nama Produk : ${order.items.map(i => i.name).join(', ')}
+┊・Nama Variasi : ${order.items.map(i => i.name).join(', ')}
+┊・Catatan Variasi : -
+┊・ID Buyer : ${jidToNumber(order.userJid)}
+┊・Jumlah Beli : ${order.items.reduce((a, b) => a + b.qty, 0)}
+┊・Berhasil Dipenuhi : ${delivered.length} pcs
+┊・Total Dibayar : ${rupiah(order.total)}
+┊・Methode Pay : QRIS (Acc admin)
+┊・Tanggal/Jam Transaksi : ${paidAt}
+╰┈┈┈┈┈┈┈┈
+
+〔 〔 PRODUCT DETAIL 〕 〕
+
+${detailLines}`;
+
+    await sock.sendMessage(order.userJid, { text: successMsg });
     if (delivered.length) updateOrder(order.id, { delivered });
 
     // kabari admin lain
@@ -110,20 +137,37 @@ Ubah: /menu edit ${p.id} harga 30000
 Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     }
     if (sub === 'add') {
-      // /menu add Nama | 25000 | deskripsi | stok:item1,item2
-      // deskripsi & stok opsional, urutan bebas (bagian "stok:" dikenali otomatis)
+      // Mendukung 2 format:
+      //   /menu add Nama | 25000 | deskripsi | stok:a,b
+      //   /menu add Nama 25000 deskripsi (stok:a,b)   <- spasi, tanpa |
       const payload = text.slice(text.toLowerCase().indexOf('add') + 3).trim();
-      const parts = payload.split('|').map(s => s.trim()).filter(Boolean);
-      if (parts.length < 2) return reply('Format: /menu add Nama | 25000 | deskripsi | stok:a,b\nContoh: /menu add Canva Pro | 15000 | invite 1 bulan | stok:akun1,akun2');
-      const [name, priceStr, ...others] = parts;
-      let desc = '';
-      let stok = [];
-      for (const o of others) {
-        const m = /^stok:(.*)$/is.exec(o);
-        if (m) stok = m[1].split(',').map(s => s.trim()).filter(Boolean);
-        else if (!desc) desc = o;
-        else desc += ' | ' + o;
+      let name = '', priceStr = '', desc = '', stok = [];
+
+      if (payload.includes('|')) {
+        const parts = payload.split('|').map(x => x.trim()).filter(Boolean);
+        if (parts.length < 2) return reply('Format: /menu add Nama | 25000 | deskripsi | stok:a,b\nContoh: /menu add Canva Pro | 15000 | invite 1 bulan | stok:akun1,akun2');
+        const [n, p, ...others] = parts;
+        name = n;
+        priceStr = p;
+        for (const o of others) {
+          const m = /^stok:(.*)$/is.exec(o);
+          if (m) stok = m[1].split(',').map(x => x.trim()).filter(Boolean);
+          else if (!desc) desc = o;
+          else desc += ' | ' + o;
+        }
+      } else {
+        const tokens = payload.split(/\s+/).filter(Boolean);
+        const priceIdx = tokens.findIndex(t => /^\d[\d.]*$/.test(t.replace(/[^\d.]/g, '')) && /\d/.test(t));
+        if (priceIdx < 1) return reply('Format: /menu add Nama Harga deskripsi (stok:a,b)\nContoh: /menu add Canva Pro 15000 invite 1 bulan stok:akun1,akun2');
+        name = tokens.slice(0, priceIdx).join(' ');
+        priceStr = tokens[priceIdx];
+        for (const t of tokens.slice(priceIdx + 1)) {
+          const m = /^stok:(.*)$/i.exec(t);
+          if (m) stok = stok.concat(m[1].split(',').map(x => x.trim()).filter(Boolean));
+          else desc = (desc ? desc + ' ' : '') + t;
+        }
       }
+
       const price = parseInt(String(priceStr).replace(/\D/g, ''), 10);
       if (!name) return reply('❌ Nama produk wajib diisi.');
       if (!price || price <= 0) return reply('❌ Harga tidak valid. Contoh: 15000');
@@ -131,7 +175,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       const id = nextProductId();
       ps.push({ id, name, price, desc, stock: stok, active: true });
       saveProducts(ps);
-      return reply(`✅ Produk ditambah:\n• ID: ${id}\n• Nama: ${name}\n• Harga: Rp${fmt(price)}\n• Stok: ${stok.length} item\n\nLihat: /menu info ${id}`);
+      return reply(`✅ Produk ditambah:\n• ID: ${id}\n• Nama: ${name}\n• Harga: Rp${fmt(price)}\n• Deskripsi: ${desc || '-'}\n• Stok: ${stok.length} item\n\nLihat: /menu info ${id}`);
     }
     if (sub === 'del' || sub === 'hapus' || sub === 'delete') {
       const id = rest[1];
@@ -148,7 +192,14 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       const p = findProduct(id);
       if (!p) return reply(`❌ Produk ${id} tidak ditemukan. Lihat daftar: /menu`);
       const field = (fieldRaw || '').toLowerCase();
-      const val = valParts.join(' ').trim();
+      // Untuk deskripsi, pertahankan spasi & baris baru (format multi-baris) —
+      // bukan gabung token (yang menghapus newline).
+      let val = valParts.join(' ').trim();
+      if (field === 'deskripsi' || field === 'desk') {
+        const key = fieldRaw || '';
+        const i = text.toLowerCase().indexOf(key.toLowerCase());
+        if (i >= 0) val = text.slice(i + key.length).trim();
+      }
       const ps = getProducts();
       const t = ps.find(x => x.id === p.id);
       if (field === 'harga') {

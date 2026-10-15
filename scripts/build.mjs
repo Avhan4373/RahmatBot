@@ -37,10 +37,16 @@ function readEnvFile(p) {
 
 const envFile = readEnvFile('.env');
 const secrets = readEnvFile('license-server/deploy/.secrets.local');
-const LICENSE_SECRET =
-  process.env.LICENSE_SECRET || envFile.LICENSE_SECRET || secrets.LICENSE_SECRET || '';
-const LICENSE_SERVER =
-  process.env.LICENSE_SERVER || envFile.LICENSE_SERVER || secrets.LICENSE_SERVER || 'https://lisensi.avhanapp.my.id';
+// Lisensi hanya di-"bake" bila diminta eksplisit (production). Saat development
+// default-nya TIDAK bake → bot pakai .env (mode dev) agar mudah dites.
+const BAKE_LICENSE =
+  process.env.BAKE_LICENSE === 'true' || process.env.BAKE_LICENSE === '1';
+const LICENSE_SECRET = BAKE_LICENSE
+  ? (process.env.LICENSE_SECRET || envFile.LICENSE_SECRET || secrets.LICENSE_SECRET || '')
+  : '';
+const LICENSE_SERVER = BAKE_LICENSE
+  ? (process.env.LICENSE_SERVER || envFile.LICENSE_SERVER || secrets.LICENSE_SERVER || 'https://lisensi.avhanapp.my.id')
+  : '';
 
 if (!LICENSE_SECRET || LICENSE_SECRET.startsWith('GANTI')) {
   console.warn('⚠️  LICENSE_SECRET tidak ditemukan / masih default.');
