@@ -147,11 +147,19 @@ ${detailLines}`;
       if (!variants.length) return reply('Format varian tidak valid.');
       const ps = getProducts();
       const t = ps.find(x => x.id === p.id);
-      t.variants = variants;
-      t.price = Math.min(...variants.map(v => v.price));
+      const existing = t.variants || [];
+      for (const nv of variants) {
+        const ev = existing.find(x => (x.name || "").toLowerCase() === (nv.name || "").toLowerCase());
+        if (ev) {
+          if (nv.price > 0) ev.price = nv.price;
+          ev.stock = [...(ev.stock || []), ...(nv.stock || [])];
+        } else existing.push(nv);
+      }
+      t.variants = existing;
+      t.price = existing.length ? Math.min(...existing.map(v => v.price)) : t.price;
       t.stock = [];
       saveProducts(ps);
-      return reply(`✅ Variasi ${t.id} diset:\\n` + variants.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
+      return reply(`✅ Variasi ${t.id} diset:\\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
     }
     if (sub === 'list' || sub === '') {
       const ps = getProducts();
@@ -257,11 +265,19 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       if (!variants.length) return reply('Format: /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3,akun4');
       const ps = getProducts();
       const t = ps.find(x => x.id === p.id);
-      t.variants = variants;
-      t.price = Math.min(...variants.map(v => v.price));
+      const existing = t.variants || [];
+      for (const nv of variants) {
+        const ev = existing.find(x => (x.name || "").toLowerCase() === (nv.name || "").toLowerCase());
+        if (ev) {
+          if (nv.price > 0) ev.price = nv.price;
+          ev.stock = [...(ev.stock || []), ...(nv.stock || [])];
+        } else existing.push(nv);
+      }
+      t.variants = existing;
+      t.price = existing.length ? Math.min(...existing.map(v => v.price)) : t.price;
       t.stock = [];
       saveProducts(ps);
-      return reply(`\\u2705 Variasi ${t.id} diset:\\n` + variants.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
+      return reply(`\\u2705 Variasi ${t.id} diset:\\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
     }
     if (sub === 'del' || sub === 'hapus' || sub === 'delete') {
       const raw = (rest[1] || '').trim();
