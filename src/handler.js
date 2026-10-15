@@ -190,6 +190,10 @@ export async function handleMessage(sock, m) {
     const alias = {
       add: '/menu add',
       tambah: '/menu add',
+      variants: '/menu variants',
+      varians: '/menu variants',
+      variant: '/menu variants',
+      variasi: '/menu variants',
       del: '/menu del',
       hapus: '/menu hapus',
       delete: '/menu delete',

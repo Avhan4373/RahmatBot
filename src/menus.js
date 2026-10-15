@@ -80,7 +80,11 @@ status — order pelanggan yang menunggu
 *Produk:*
 /menu — daftar • /menu info P01 — detail + stok
 /menu add Nama | 25000 | deskripsi | stok:a,b
+atau langsung: add Nama 25000 deskripsi stok:a,b
 /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
+atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
+/menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
+atau langsung: add varians 1 Bulan 1500 10; Canva Head 7000 22
 /menu edit P01 harga 30000 — (nama/deskripsi/on/off)
 /menu del P01 — hapus produk
 

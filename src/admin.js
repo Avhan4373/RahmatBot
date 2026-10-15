@@ -111,6 +111,42 @@ ${detailLines}`;
 
   if (c === '/menu' || c === '/produk') {
     const sub = (rest[0] || 'list').toLowerCase();
+
+    // Tambah variasi langsung: /menu add varians 1 Bulan 1500 10; Canva Head 7000 22
+    if (sub === 'add' && /^(varians|varian|variasi|variant)$/i.test(rest[1] || '')) {
+      const lastId = getSetting('lastProduct');
+      if (!lastId) return reply('Buat produk dulu contoh: /menu add Canva Pro');
+      const p = findProduct(lastId);
+      if (!p) return reply(`❌ Produk terakhir ${lastId} tidak ditemukan.`);
+      const kw = rest[1];
+      const payload = text.slice(text.toLowerCase().indexOf(kw.toLowerCase()) + kw.length).trim().replace(/^set\\s+/i, '');
+      if (!payload) return reply(`Pakai: /menu add varians 1 Bulan 1500 10; Canva Head 7000 22;...\\natau dengan stok akun: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2`);
+      const segments = payload.split(';').map(s => s.trim()).filter(Boolean);
+      const variants = [];
+      for (const seg of segments) {
+        if (seg.includes(':')) {
+          const [name, priceStr, stockStr] = seg.split(':');
+          const price = parseInt(String(priceStr || '').replace(/\\D/g, ''), 10);
+          const stock = stockStr ? stockStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+          if (name && price > 0) variants.push({ name: name.trim(), price, stock });
+        } else {
+          const toks = seg.split(/\s+/).filter(Boolean);
+          const stockCount = parseInt(toks.pop() || '0', 10);
+          const price = parseInt(toks.pop() || '0', 10);
+          const name = toks.join(' ').trim();
+          const stock = (stockCount > 0) ? Array.from({ length: stockCount }, (_, i) => `stok-${i + 1}`) : [];
+          if (name && price > 0) variants.push({ name, price, stock });
+        }
+      }
+      if (!variants.length) return reply('Format varian tidak valid.');
+      const ps = getProducts();
+      const t = ps.find(x => x.id === p.id);
+      t.variants = variants;
+      t.price = Math.min(...variants.map(v => v.price));
+      t.stock = [];
+      saveProducts(ps);
+      return reply(`✅ Variasi ${t.id} diset:\\n` + variants.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
+    }
     if (sub === 'list' || sub === '') {
       const ps = getProducts();
       if (!ps.length) return reply('📭 Belum ada produk.\nTambah: /menu add Nama | 25000 | deskripsi | stok:akun1,akun2');
@@ -141,7 +177,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       //   /menu add Nama | 25000 | deskripsi | stok:a,b
       //   /menu add Nama 25000 deskripsi (stok:a,b)   <- spasi, tanpa |
       const payload = text.slice(text.toLowerCase().indexOf('add') + 3).trim();
-      let name = '', priceStr = '', desc = '', stok = [];
+      let name = '', priceStr = '', desc = '', stok = [], allowZeroPrice = false;
 
       if (payload.includes('|')) {
         const parts = payload.split('|').map(x => x.trim()).filter(Boolean);
@@ -158,28 +194,38 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       } else {
         const tokens = payload.split(/\s+/).filter(Boolean);
         const priceIdx = tokens.findIndex(t => /^\d[\d.]*$/.test(t.replace(/[^\d.]/g, '')) && /\d/.test(t));
-        if (priceIdx < 1) return reply('Format: /menu add Nama Harga deskripsi (stok:a,b)\nContoh: /menu add Canva Pro 15000 invite 1 bulan stok:akun1,akun2');
-        name = tokens.slice(0, priceIdx).join(' ');
-        priceStr = tokens[priceIdx];
-        const priceToken = tokens[priceIdx];
-        const afterPrice = payload.slice(payload.toLowerCase().indexOf(priceToken.toLowerCase()) + priceToken.length).trim();
-        const stokMatch = /(?:^|\s)stok:(.+)$/is.exec(afterPrice);
-        if (stokMatch) {
-          const seg = stokMatch[1].trim();
-          stok = stok.concat(seg.split(',').map(x => x.trim()).filter(Boolean));
-          desc = afterPrice.slice(0, stokMatch.index).trim();
+        if (priceIdx === 0) return reply('Format: /menu add Nama Harga deskripsi (stok:a,b)\nContoh: /menu add Canva Pro 15000 invite 1 bulan stok:akun1,akun2');
+        if (priceIdx < 0) {
+          name = payload;
+          priceStr = '0';
+          desc = '';
+          stok = [];
+        allowZeroPrice = true;
         } else {
-          desc = afterPrice.trim();
+          if (priceIdx < 1) return reply('Format: /menu add Nama Harga deskripsi (stok:a,b)\nContoh: /menu add Canva Pro 15000 invite 1 bulan stok:akun1,akun2');
+          name = tokens.slice(0, priceIdx).join(' ');
+          priceStr = tokens[priceIdx];
+          const priceToken = tokens[priceIdx];
+          const afterPrice = payload.slice(payload.toLowerCase().indexOf(priceToken.toLowerCase()) + priceToken.length).trim();
+          const stokMatch = /(?:^|\s)stok:(.+)$/is.exec(afterPrice);
+          if (stokMatch) {
+            const seg = stokMatch[1].trim();
+            stok = stok.concat(seg.split(',').map(x => x.trim()).filter(Boolean));
+            desc = afterPrice.slice(0, stokMatch.index).trim();
+          } else {
+            desc = afterPrice.trim();
+          }
         }
       }
 
       const price = parseInt(String(priceStr).replace(/\D/g, ''), 10);
       if (!name) return reply('❌ Nama produk wajib diisi.');
-      if (!price || price <= 0) return reply('❌ Harga tidak valid. Contoh: 15000');
+      if (!allowZeroPrice && (!price || price <= 0)) return reply('❌ Harga tidak valid. Contoh: 15000');
       const ps = getProducts();
       const id = nextProductId();
-      ps.push({ id, name, price, desc, stock: stok, active: true });
+      ps.push({ id, name, price, desc, stock: stok, active: true, variants: [] });
       saveProducts(ps);
+      setSetting('lastProduct', id);
       return reply(`✅ Produk ditambah:\n• ID: ${id}\n• Nama: ${name}\n• Harga: Rp${fmt(price)}\n• Deskripsi: ${desc || '-'}\n• Stok: ${stok.length} item\n\nLihat: /menu info ${id}`);
     }
     if (sub === 'variants' || sub === 'variasi' || sub === 'variant') {
