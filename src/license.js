@@ -163,6 +163,7 @@ export async function enforceLicense({ botName } = {}) {
 // ---- Heartbeat: server bisa mematikan bot dari jauh ----
 export function startHeartbeat({ botName, onInvalid } = {}) {
   const key = (process.env.LICENSE_KEY || '').trim();
+  const server = (BAKED_SERVER || process.env.LICENSE_SERVER || '').trim();
   const required = !!BAKED_SERVER || (process.env.LICENSE_REQUIRED || 'false') === 'true';
   if (!required && (!key || !server)) return; // mode dev
   let fails = 0;

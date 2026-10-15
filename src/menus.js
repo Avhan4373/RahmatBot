@@ -94,7 +94,10 @@ export const ADMIN_HELP_TEXT =
   contoh no harga awal: add Canva Pro
 - Edit produk:
   /menu edit P01 harga 30000
-  field: harga | nama | deskripsi | on | off
+  field: harga | nama | deskripsi | on | off | varian
+- Edit harga varian:
+  /menu edit P01 varian "1 Bulan" 5000
+  /menu edit P01 varian 1 Bulan:5000 | Canva Head:7000
 - Hapus produk:
   /menu del P01
   /menu del P01,P02,P03
@@ -392,7 +395,9 @@ Ikuti urutan ini dari atas ke bawah.
 
 4) EDIT PRODUK
 • /menu edit P01 harga 1500
-• field lain: nama, deskripsi, on, off
+• edit harga varian: /menu edit P01 varian "1 Bulan" 5000
+• bulk: /menu edit P01 varian 1 Bulan:5000 | Canva Head:7000
+• field lain: nama, deskripsi, on, off, varian
 
 5) PROSES TRANSAKSI
 • beli P01 1 Bulan 2

@@ -29,7 +29,11 @@ Bot WhatsApp penjual produk digital. Admin mengelola produk, stok, order, dan pe
 - `add Nama 25000 deskripsi stok:a,b`
 - `add Canva Pro` → tambah produk tanpa harga (isi via varian)
 - `/menu edit P01 harga 30000`
-  - field: `harga`, `nama`, `deskripsi`, `on`, `off`
+  - field: `harga`, `nama`, `deskripsi`, `on`, `off`, `varian`
+- Edit harga varian:
+  - `/menu edit P01 varian "1 Bulan" 5000`
+  - `/menu edit P01 varian 1 Bulan harga 5000`
+  - bulk: `/menu edit P01 varian 1 Bulan:5000 | Canva Head:7000`
 - Hapus:
   - `/menu del P01`
   - `/menu del P01,P02,P03`

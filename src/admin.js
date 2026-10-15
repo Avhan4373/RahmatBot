@@ -184,7 +184,8 @@ ${(p.variants||[]).length ? '🧩 Variasi:\n' + p.variants.map((v,i)=>`  ${i+1}.
 📊 Stok digital (${stok.length}):
 ${stok.length ? stok.map((s, i) => `  ${i + 1}. ${s}`).join('\n') : '  (kosong)'}
 
-Ubah: /menu edit ${p.id} harga 30000
+Ubah produk: /menu edit ${p.id} harga 30000
+Edit harga varian: /menu edit ${p.id} varian "1 Bulan" 5000
 Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     }
     if (sub === 'add') {
@@ -331,10 +332,85 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       }
       const ps = getProducts();
       const t = ps.find(x => x.id === p.id);
+
+      // --- Helper: ekstrak daftar spesifikasi harga varian dari `val`.
+      // Mendukung format tunggal/bulk:
+      //   "1 Bulan 5000", "1 Bulan harga 5000", "1 Bulan:5000",
+      //   "1 Bulan:5000 | Canva Head:7000", "1 Bulan 5000; Canva Head 7000"
+      const parseVariantPriceSpecs = (raw) => {
+        const segments = String(raw || '').split(/[;|]/).map(x => x.trim()).filter(Boolean);
+        const specs = [];
+        for (const seg of segments) {
+          let name, priceStr;
+          if (seg.includes(':')) {
+            const idx = seg.indexOf(':');
+            name = seg.slice(0, idx);
+            priceStr = seg.slice(idx + 1);
+          } else {
+            const m = seg.trim().match(/^(.*?)[\s]+(\d[\d.]*)\s*$/);
+            if (!m) return null;
+            name = m[1];
+            priceStr = m[2];
+          }
+          // bersihkan token 'harga'/'price'/'varian' dari nama
+          name = String(name || '').replace(/\b(harga|price|varian|variant|varians)\b/gi, '').trim().replace(/^["']+|["']+$/g, '').trim();
+          const price = parseInt(String(priceStr || '').replace(/[^\d]/g, ''), 10);
+          if (!name || !price || price <= 0) return null;
+          specs.push({ name, price });
+        }
+        return specs.length ? specs : null;
+      };
+
+      // Tentukan apakah ini edit harga varian (bukan harga dasar produk).
+      const variantFields = new Set(['varian', 'variant', 'varians', 'variasi', 'harga_varian', 'hargavarian', 'varian_harga', 'varianharga', 'harga-varian', 'harga varian', 'listharga', 'hargalist']);
+      let isVariantEdit = variantFields.has(field);
+      let variantVal = val;
       if (field === 'harga') {
+        // Jika val bukan angka murni (ada nama varian / spasi huruf), perlakukan sebagai edit harga varian.
+        const pureNumber = /^[\s\d.,]+$/.test(val) && /\d/.test(val) && !/[a-zA-Z]/.test(val);
+        if (!pureNumber) { isVariantEdit = true; }
+      }
+      // field tanpa argumen "varian": /menu edit P01 varian 1 Bulan 5000
+      if (field === 'harga' && val.toLowerCase().startsWith('varian ')) {
+        isVariantEdit = true;
+        variantVal = val.slice(7).trim();
+      }
+      if (field === 'harga' && val.toLowerCase().startsWith('varians ')) {
+        isVariantEdit = true;
+        variantVal = val.slice(8).trim();
+      }
+
+      if (field === 'harga' && !isVariantEdit) {
         const price = parseInt(val.replace(/\D/g, ''), 10);
         if (!price || price <= 0) return reply('❌ Harga tidak valid.');
         t.price = price;
+      }
+      else if (isVariantEdit) {
+        if (!Array.isArray(t.variants) || !t.variants.length) {
+          return reply(`❌ Produk ${t.id} belum punya variasi. Set dulu: /menu variants ${t.id} 1 Bulan:1500:akun1,akun2`);
+        }
+        const specs = parseVariantPriceSpecs(variantVal);
+        if (!specs) {
+          return reply('Format edit harga varian:\n/menu edit ' + t.id + ' varian "1 Bulan" 5000\nBulk: /menu edit ' + t.id + ' varian 1 Bulan:5000 | Canva Head:7000\nLihat varian: /menu variants ' + t.id);
+        }
+        const updated = [];
+        const missing = [];
+        for (const spec of specs) {
+          const v = findVariant(t, spec.name);
+          if (!v) { missing.push(spec.name); continue; }
+          v.price = spec.price;
+          updated.push(`• ${v.name}: Rp${fmt(v.price)}`);
+        }
+        if (!updated.length) {
+          return reply('❌ Varian tidak ditemukan: ' + missing.join(', ') + '\nLihat: /menu variants ' + t.id);
+        }
+        // harga dasar produk = harga termurah varian
+        if (t.variants.length) t.price = Math.min(...t.variants.map(v => Number(v.price) || t.price));
+        let msg = `✅ Harga varian ${t.id} diupdate:\n` + updated.join('\n');
+        if (missing.length) msg += `\n❌ Tidak ditemukan: ${missing.join(', ')}`;
+        msg += `\n💰 Harga dasar (termurah): Rp${fmt(t.price)}\nCek: /menu info ${t.id}`;
+        saveProducts(ps);
+        return reply(msg);
       }
       else if (field === 'nama') {
         if (!val) return reply('❌ Nama baru kosong.');
@@ -345,7 +421,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       }
       else if (field === 'on') t.active = true;
       else if (field === 'off') t.active = false;
-      else return reply('Field: harga / nama / deskripsi / on / off\nContoh: /menu edit P01 harga 30000');
+      else return reply('Field: harga / nama / deskripsi / on / off / varian\nContoh: /menu edit P01 harga 30000\nEdit varian: /menu edit P01 varian "1 Bulan" 5000');
       saveProducts(ps);
       return reply(`✅ ${t.id} diupdate. Cek: /menu info ${t.id}`);
     }
@@ -590,6 +666,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
 /menu info P01 — detail + isi stok
 /menu add Nama | 25000 | deskripsi | stok:a,b
 /menu edit P01 harga 30000 — nama/deskripsi/on/off
+/menu edit P01 varian "1 Bulan" 5000 — edit harga varian (bulk: 1 Bulan:5000 | Canva Head:7000)
 /menu del P01 | P01,P02,P03 | all confirm
 /menu variants P01 — list varian
 /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3
