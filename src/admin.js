@@ -5,7 +5,7 @@ import { getSetting, setSetting, clearSetting, allSettings } from './settings.js
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import {
   getProducts, saveProducts, findProduct, nextProductId, addStock,
-  getOrders, findOrder, updateOrder, takeStock,
+  findVariant, getOrders, findOrder, updateOrder, takeStock,
 } from './store.js';
 
 const fmt = (n) => Number(n).toLocaleString('id-ID');
@@ -131,8 +131,14 @@ ${detailLines}`;
           if (name && price > 0) variants.push({ name: name.trim(), price, stock });
         } else {
           const toks = seg.split(/\s+/).filter(Boolean);
-          const stockCount = parseInt(toks.pop() || '0', 10);
-          const price = parseInt(toks.pop() || '0', 10);
+          let stockCount = 0;
+          let price = 0;
+          if (toks.length >= 2 && /^\d[\d.]*$/.test(toks[toks.length-1].replace(/[^\d.]/g,'')) && /^\d[\d.]*$/.test(toks[toks.length-2].replace(/[^\d.]/g,''))) {
+            stockCount = parseInt(toks.pop() || '0', 10);
+            price = parseInt(toks.pop() || '0', 10);
+          } else {
+            price = parseInt(toks.pop() || '0', 10);
+          }
           const name = toks.join(' ').trim();
           const stock = (stockCount > 0) ? Array.from({ length: stockCount }, (_, i) => `stok-${i + 1}`) : [];
           if (name && price > 0) variants.push({ name, price, stock });
@@ -320,6 +326,72 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     if (!id) return reply('Pakai: /stok P01 akun1,akun2\nLihat: /stok lihat P01');
     const p = findProduct(id);
     if (!p) return reply(`❌ Produk ${id} tidak ditemukan. Lihat daftar: /menu`);
+    // Varian-aware stock management
+    if (Array.isArray(p.variants) && p.variants.length) {
+      const isLihat = ['lihat','list','info'].includes(sub);
+      if (isLihat) {
+        const variantQuery = args.join(' ').trim();
+        if (!variantQuery) {
+          return reply('📊 *Stok varians ' + p.id + ' (' + p.name + ') — ' + p.variants.reduce((a,v)=>a+v.stock.length,0) + ' item:*\n' +
+            p.variants.map(v => '• ' + v.name + ': ' + v.stock.length + ' item').join('\n') +
+            '\n\nLihat detail: /stok lihat ' + p.id + ' <varian>\nTambah stok: /stok ' + p.id + ' <varian>:akun1,akun2');
+        }
+        const v = findVariant(p, variantQuery);
+        if (!v) return reply('❌ Variasi tidak ditemukan.');
+        if (!(v.stock||[]).length) return reply('📊 Stok ' + v.name + ' kosong.\nTambah: /stok ' + p.id + ' ' + v.name + ':akun1,akun2');
+        return reply('📊 Stok ' + v.name + ' — ' + v.stock.length + ' item:\n' + v.stock.map((s,i)=> (i+1)+'. '+s).join('\n') +
+          '\n\nHapus: /stok hapus ' + p.id + ' ' + v.name + ' <nomor>');
+      }
+      if (['kosong','clear','reset'].includes(sub)) {
+        const variantQuery = args.join(' ').trim();
+        const ps = getProducts();
+        const t = ps.find(x => x.id.toLowerCase() === p.id.toLowerCase());
+        if (variantQuery) {
+          const v = findVariant(t, variantQuery);
+          if (!v) return reply('❌ Variasi tidak ditemukan.');
+          v.stock = [];
+          saveProducts(ps);
+          return reply('🗑️ Semua stok ' + v.name + ' dikosongkan.');
+        }
+        (t.variants||[]).forEach(v => v.stock = []);
+        saveProducts(ps);
+        return reply('🗑️ Semua stok variasi ' + p.id + ' dikosongkan.');
+      }
+      if (['hapus','del','delete'].includes(sub)) {
+        const no = parseInt(args[args.length-1], 10);
+        const variantQuery = !no || Number.isNaN(no) ? args.join(' ') : args.slice(0,-1).join(' ');
+        if (!no || no < 1) return reply('Pakai: /stok hapus ' + p.id + ' <varian> <nomor>');
+        const ps = getProducts();
+        const t = ps.find(x => x.id.toLowerCase() === p.id.toLowerCase());
+        const v = findVariant(t, variantQuery);
+        if (!v) return reply('❌ Variasi tidak ditemukan.');
+        if (no > (v.stock||[]).length) return reply('❌ Nomor 1–' + (v.stock||[]).length);
+        const [gone] = v.stock.splice(no-1, 1);
+        saveProducts(ps);
+        return reply('🗑️ Stok #' + no + ' dihapus dari ' + v.name + ': ' + gone + '\nSisa: ' + v.stock.length + ' item.');
+      }
+      // default add
+      const afterId = rest.join(' ').slice(rest.join(' ').toLowerCase().indexOf(id.toLowerCase()) + id.length).trim();
+      let cleaned = afterId;
+      if (/^(tambah|add)/i.test(cleaned)) cleaned = cleaned.replace(/^(tambah|add)\s+/i, '');
+      let variantQuery = '', items = [];
+      const colonIdx = cleaned.indexOf(':');
+      if (colonIdx >= 0) {
+        variantQuery = cleaned.slice(0, colonIdx).trim();
+        items = cleaned.slice(colonIdx+1).split(',').map(s => s.trim()).filter(Boolean);
+      } else {
+        const commaIdx = cleaned.indexOf(',');
+        if (commaIdx >= 0) {
+          variantQuery = cleaned.slice(0, commaIdx).trim();
+          items = cleaned.slice(commaIdx).split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!variantQuery || !items.length) return reply('Pakai: /stok ' + p.id + ' <varian>:akun1,akun2');
+      if (!addStock(p.id, items, variantQuery)) return reply('❌ Variasi tidak ditemukan');
+      const np = findProduct(p.id);
+      const nv = findVariant(np, variantQuery) || {}
+      return reply('✅ Stok ' + (variantQuery||'(varian)') + ' +'+items.length+' item (total '+(nv.stock||[]).length+').\nLihat: /stok lihat '+p.id+' '+variantQuery);
+    }
     if (['lihat', 'list', 'info'].includes(sub)) {
       const stok = p.stock || [];
       if (!stok.length) return reply(`📊 Stok ${p.id} (${p.name}) kosong.\nTambah: /stok ${p.id} akun1,akun2`);

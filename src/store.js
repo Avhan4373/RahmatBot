@@ -65,10 +65,17 @@ export function takeStock(productId, variantName = null) {
   return item;
 }
 
-export function addStock(productId, items) {
+export function addStock(productId, items, variantName = null) {
   const all = getProducts();
   const p = all.find(x => x.id.toLowerCase() === String(productId).toLowerCase());
   if (!p) return false;
+  if (Array.isArray(p.variants) && p.variants.length) {
+    const v = findVariant(p, variantName);
+    if (!v) return false;
+    v.stock = [...(v.stock || []), ...items];
+    write(PRODUCTS_FILE, all);
+    return true;
+  }
   p.stock = [...(p.stock || []), ...items];
   write(PRODUCTS_FILE, all);
   return true;
