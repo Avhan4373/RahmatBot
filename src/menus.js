@@ -298,7 +298,12 @@ export function cartText(jid) {
     const p = findProduct(it.id);
     if (!p) continue;
     const name = it.name || p.name;
-    const price = (it.price != null) ? it.price : p.price;
+    let price = it.price;
+    if (Array.isArray(p.variants) && p.variants.length && it.variant) {
+      const v = findVariant(p, it.variant);
+      if (v && v.price != null) price = v.price;
+    }
+    if (price == null) price = p.price;
     const sub = price * it.qty;
     total += sub;
     t += `\n• ${name} (${p.id}) x${it.qty} = *${rupiah(sub)}*`;

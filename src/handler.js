@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { config } from '../config.js';
+import { config, rupiah } from '../config.js';
 import { learnFromMessage, isAdminJid, jidToNumber } from './lids.js';
 import {
   getProducts, findProduct, findVariant, getCart, setCart, clearCart,
@@ -276,8 +276,14 @@ export async function handleMessage(sock, m) {
     for (const it of items) {
       const p = findProduct(it.id);
       if (!p) continue;
-      detail.push({ id: p.id, name: it.name || p.name, variant: it.variant || null, price: (it.price != null ? it.price : p.price), qty: it.qty });
-      total += (it.price != null ? it.price : p.price) * it.qty;
+      let price = it.price;
+      if (Array.isArray(p.variants) && p.variants.length && it.variant) {
+        const v = findVariant(p, it.variant);
+        if (v && v.price != null) price = v.price;
+      }
+      if (price == null) price = p.price;
+      detail.push({ id: p.id, name: it.name || p.name, variant: it.variant || null, price, qty: it.qty });
+      total += price * it.qty;
     }
     if (!detail.length) return reply('❌ Produk di keranjang tidak valid.');
     const order = createOrder({ userJid: from, userName: pushName, items: detail, total });
@@ -309,8 +315,8 @@ async function addToCart(sock, from, reply, quoted, productId, variant = null, q
     return;
   }
   if (Array.isArray(p.variants) && p.variants.length) {
-    const v = findVariant(p, variant);
-    if (!v) {
+    const v = variant ? findVariant(p, variant) : null;
+    if (!variant || !v) {
       const list = p.variants.map((x, i) => `${i + 1}. *${x.name}* - ${rupiah(x.price)} (stok ${x.stock?.length ?? 0})`).join('\n');
       await reply(`Pilih variasi terlebih dulu:\n${list}\n\nKetik: *beli ${p.id} <nama variasi> ${qty}*`);
       return;
