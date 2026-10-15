@@ -120,7 +120,7 @@ ${detailLines}`;
       if (!p) return reply(`❌ Produk terakhir ${lastId} tidak ditemukan.`);
       const kw = rest[1];
       const payload = text.slice(text.toLowerCase().indexOf(kw.toLowerCase()) + kw.length).trim().replace(/^set\\s+/i, '');
-      if (!payload) return reply(`Pakai: /menu add varians 1 Bulan 1500 10; Canva Head 7000 22;...\\natau dengan stok akun: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2`);
+      if (!payload) return reply(`Pakai: /menu add varians 1 Bulan 1500 10; Canva Head 7000 22;...\natau dengan stok akun: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2`);
       const segments = payload.split(';').map(s => s.trim()).filter(Boolean);
       const variants = [];
       for (const seg of segments) {
@@ -159,7 +159,7 @@ ${detailLines}`;
       t.price = existing.length ? Math.min(...existing.map(v => v.price)) : t.price;
       t.stock = [];
       saveProducts(ps);
-      return reply(`✅ Variasi ${t.id} diset:\\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
+      return reply(`✅ Variasi ${t.id} diset:\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\n'));
     }
     if (sub === 'list' || sub === '') {
       const ps = getProducts();
@@ -244,14 +244,14 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     }
     if (sub === 'variants' || sub === 'variasi' || sub === 'variant') {
       const id = rest[1];
-      if (!id) return reply('Pakai: /menu variants P01\\nSet: /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3,akun4');
+      if (!id) return reply('Pakai: /menu variants P01\nSet: /menu variants P01 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3,akun4');
       const p = findProduct(id);
-      if (!p) return reply(`\\u274c Produk ${id} tidak ditemukan.`);
+      if (!p) return reply(`\u274c Produk ${id} tidak ditemukan.`);
       const afterId = text.slice(text.toLowerCase().indexOf(id.toLowerCase()) + id.length).trim();
       if (!afterId || afterId.toLowerCase() === 'list') {
         const vs = p.variants || [];
-        if (!vs.length) return reply(`\\u1f4cb Variasi ${p.id} masih kosong.\\nSet: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3`);
-        return reply(`\\u1f4cb *Variasi ${p.id} (${p.name}):*\\n` + vs.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock?.length ?? 0})`).join('\\n'));
+        if (!vs.length) return reply(`\u1f4cb Variasi ${p.id} masih kosong.\nSet: /menu variants ${p.id} 1 Bulan:1500:akun1,akun2 | Canva Head:7000:akun3`);
+        return reply(`\u1f4cb *Variasi ${p.id} (${p.name}):*\n` + vs.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock?.length ?? 0})`).join('\n'));
       }
       const spec = afterId.replace(/^set\\s+/i, '').trim();
       const segments = spec.split('|').map(s => s.trim()).filter(Boolean);
@@ -277,7 +277,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
       t.price = existing.length ? Math.min(...existing.map(v => v.price)) : t.price;
       t.stock = [];
       saveProducts(ps);
-      return reply(`\\u2705 Variasi ${t.id} diset:\\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\\n'));
+      return reply(`\u2705 Variasi ${t.id} diset:\n` + existing.map((v, i) => `${i + 1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock.length})`).join('\n'));
     }
     if (sub === 'del' || sub === 'hapus' || sub === 'delete') {
       const raw = (rest[1] || '').trim();
