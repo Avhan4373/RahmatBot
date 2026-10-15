@@ -1,57 +1,38 @@
 [
   {
     "id": "P01",
-    "name": "Canva Pro 1 Bulan (Invite)",
-    "price": 15000,
-    "desc": "Canva Pro via invite email, garansi full 1 bulan.",
-    "stock": [
-      "akun-canva-002@example.com | pass: Contoh002"
-    ],
-    "active": true
-  },
-  {
-    "id": "P02",
-    "name": "Netflix Premium 1 Bulan (Sharing)",
-    "price": 25000,
-    "desc": "Profil private, garansi ganti jika lock.",
-    "stock": [
-      "netflix-user-001 | pin 1111"
-    ],
-    "active": true
-  },
-  {
-    "id": "P03",
-    "name": "Spotify Premium 1 Bulan (Invite)",
-    "price": 20000,
-    "desc": "Invite family plan ke email kamu.",
+    "name": "Canva Pro",
+    "price": 1500,
+    "desc": "",
     "stock": [],
-    "active": true
-  },
-  {
-    "id": "P04",
-    "name": "CapCut Pro 1 Bulan",
-    "price": 18000,
-    "desc": "Login akun, garansi 30 hari.",
-    "stock": [],
-    "active": true
-  },
-  {
-    "id": "P05",
-    "name": "ChatGPT Plus 1 Bulan (Sharing)",
-    "price": 30000,
-    "desc": "Sharing aman, limit wajar.",
-    "stock": [],
-    "active": true
-  },
-  {
-    "id": "P06",
-    "name": "Melolo",
-    "price": 25000,
-    "desc": "Akun Melolo | stock:10",
-    "stock": [
-      "akun2",
-      "akun3"
-    ],
-    "active": true
+    "active": true,
+    "variants": [
+      {
+        "name": "1 Bulan",
+        "price": 1500,
+        "stock": [
+          "akun1",
+          "akun2"
+        ]
+      },
+      {
+        "name": "Canva Head",
+        "price": 7000,
+        "stock": [
+          "coba2@gmail.com|password",
+          "coba3@gmail.com|password"
+        ]
+      },
+      {
+        "name": "CANVA HEAD EDU LIFETIME",
+        "price": 30000,
+        "stock": []
+      },
+      {
+        "name": "Lifetime",
+        "price": 5000,
+        "stock": []
+      }
+    ]
   }
 ]
