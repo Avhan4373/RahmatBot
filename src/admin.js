@@ -7,6 +7,7 @@ import {
   getProducts, saveProducts, findProduct, nextProductId, addStock,
   findVariant, getOrders, findOrder, updateOrder, takeStock,
 } from './store.js';
+import { ADMIN_TUTORIAL_TEXT } from './menus.js';
 
 const fmt = (n) => Number(n).toLocaleString('id-ID');
 
@@ -569,6 +570,9 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
     }
   }
 
+  if (c === '/tutorial' || c === '/guide' || c === '/panduan' || c === '/hint') {
+    return reply(ADMIN_TUTORIAL_TEXT.replace('{{BOT}}', config.botName));
+  }
   if (c === '/help' || c === '/bantuan') {
     return reply(
 `🛠️ *PERINTAH ADMIN*
@@ -582,6 +586,7 @@ Stok: /stok ${p.id} akun-baru1,akun-baru2`);
 
 *Produk (CRUD):*
 /menu — daftar produk
+/tutorial — tutorial penggunaan awam
 /menu info P01 — detail + isi stok
 /menu add Nama | 25000 | deskripsi | stok:a,b
 /menu edit P01 harga 30000 — nama/deskripsi/on/off

@@ -6,7 +6,7 @@ import {
   createOrder, findOrder, updateOrder, userOrders, pendingPaymentOrder, getOrders,
 } from './store.js';
 import {
-  MAIN_MENU_TEXT, HELP_TEXT, ADMIN_HELP_TEXT, mainMenuList, catalogList, catalogText,
+  MAIN_MENU_TEXT, HELP_TEXT, ADMIN_HELP_TEXT, ADMIN_TUTORIAL_TEXT, mainMenuList, catalogList, catalogText,
   productQtyList, productQtyVariantList, productVariantList, productDetailText, cartText, cartActionList,
 } from './menus.js';
 import { sendInvoice, forwardProofToAdmins } from './qris.js';
@@ -206,6 +206,10 @@ export async function handleMessage(sock, m) {
       stok: '/stok',
       tolak: '/tolak',
       kirim: '/kirim',
+      tutorial: '/tutorial',
+      guide: '/tutorial',
+      panduan: '/tutorial',
+      hint: '/tutorial',
       set: '/set',
       setting: '/set',
       pengaturan: '/set',

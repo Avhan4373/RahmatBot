@@ -357,3 +357,65 @@ Konfirmasi:
 • */acc ${order.id}* → lunas + kirim produk otomatis
 • */tolak ${order.id} alasan* → tolak`);
 }
+
+export const ADMIN_TUTORIAL_TEXT =
+`🎓 *TUTORIAL ADMIN RAHMATBOT*
+
+Ikuti urutan ini dari atas ke bawah.
+
+1) MULAI & CEK PRODUK
+• ketik *menu* / *katalog*
+• ketik *detail P01*
+• lihat varian: *varian P01 1 Bulan*
+
+2) TAMBAH PRODUK BARU
+• tanpa harga dulu:
+  add Canva Pro
+• tambah varian sekaligus:
+  add varians 1 Bulan 1500; Canva Head 7000; LIFETIME 30000; Lifetime 5000
+• varian dengan stok akun:
+  add varians 1 Bulan:1500:akun1,akun2
+  catatan: update bersifat merge, varian lain tidak terhapus.
+
+3) TAMBAH STOK
+• produk biasa:
+  stok P01 akun1,akun2
+• produk varian:
+  stok P01 1 Bulan:akun1,akun2
+  stok lihat P01
+  stok lihat P01 1 Bulan
+
+4) EDIT PRODUK
+• /menu edit P01 harga 1500
+• field lain: nama, deskripsi, on, off
+
+5) PROSES TRANSAKSI
+• beli P01 1 Bulan 2
+• checkout
+• bayar via QRIS
+• admin: /acc ORDER-XXXX
+• tolak: /tolak ORDER-XXXX alasan
+
+6) BERSIHKAN/HAPUS
+• satu: del P01
+• banyak: del P01,P02,P03
+• semua: del all confirm
+
+7) PENGATURAN
+• /set lihat pengaturan
+• /set bot Nama Bot
+• /set toko Nama Toko
+• /qris (lihat/ganti: /qris ganti)
+
+8) PERCEPATAN PEMBELIAN
+• detail P01
+• varian P01 1 Bulan
+• beli P01 1 Bulan 2
+
+Tips awam:
+- Selalu cek varian dengan *menu info P01*
+- Stok varian diisi per varian
+- Jika varian tidak tampil, gunakan *menu variants P01*
+- Gunakan *del all confirm* hanya jika yakin
+- Tutorial interaktif: ketik *tutorial*, *panduan*, *guide*, atau *hint*
+- Dokumentasi lengkap: PANDUAN_ADMIN.md`;
