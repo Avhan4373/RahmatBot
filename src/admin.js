@@ -54,7 +54,7 @@ export async function handleAdminCommand({ sock, from, text, reply, msg, content
 ┊・Pay ID : ${order.id}
 ┊・Kode Unik : ${order.id}
 ┊・Nama Produk : ${order.items.map(i => i.name).join(', ')}
-┊・Nama Variasi : ${order.items.map(i => i.name).join(', ')}
+┊・Nama Variasi : ${order.items.map(i => i.variant || '(tanpa varians)').join(', ')}
 ┊・Catatan Variasi : -
 ┊・ID Buyer : ${jidToNumber(order.userJid)}
 ┊・Jumlah Beli : ${order.items.reduce((a, b) => a + b.qty, 0)}
@@ -171,7 +171,7 @@ ${detailLines}`;
 `📦 *${p.name}* (${p.id})
 💰 Harga: Rp${fmt(p.price)}
 📝 ${p.desc || '-'}
-📌 Status: ${p.active === false ? 'NONAKTIF' : 'aktif'}
+${(p.variants||[]).length ? '🧩 Variasi:\n' + p.variants.map((v,i)=>`  ${i+1}. ${v.name} - Rp${fmt(v.price)} (stok ${v.stock?.length ?? 0})`).join('\n') + '\n' : ''}📌 Status: ${p.active === false ? 'NONAKTIF' : 'aktif'}
 📊 Stok digital (${stok.length}):
 ${stok.length ? stok.map((s, i) => `  ${i + 1}. ${s}`).join('\n') : '  (kosong)'}
 

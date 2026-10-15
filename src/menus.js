@@ -242,7 +242,7 @@ ${desc}
 📦 Stok      : ${ready ? 'tersedia ✅' : 'kosong, tanya admin ⚠️'}
 
 Ketik: *beli ${p.id}* atau *beli ${p.id} 2* untuk jumlah 2.
-${p.variants?.length ? 'Variasi: *beli ' + p.id + ' <nama variasi> <jumlah>*' : ''}
+${p.variants?.length ? 'Varian tersedia:\n' + p.variants.map((v,i)=>`${i+1}. ${v.name} - ${rupiah(v.price)} (stok ${v.stock?.length ?? 0})`).join('\n') + '\n\nKetik: *beli ' + p.id + ' <nama varian> <jumlah>*' : ''}
 Ketik *katalog* untuk kembali.`);
 }
 

@@ -196,6 +196,7 @@ ${desc}
 🔖 ID Produk : *${prod.id}*
 💰 Harga     : *${rupiah(prod.price)}*
 📦 Stok      : ${stockBadge(prod)}
+${prod.variants?.length ? '\nVarian tersedia:\n' + prod.variants.map((v,i)=>`${i+1}. ${v.name} - ${rupiah(v.price)} (stok ${v.stock?.length ?? 0})`).join('\n') + '\n\n🛒 Cara beli varian:\n3️⃣ Di chat pribadi ketik *beli ${prod.id} <nama varian> <jumlah>*' : ''}
 
 🛒 *CARA ORDER:*
 1️⃣ Ketik *${p}caraorder* untuk buka chat pribadi
