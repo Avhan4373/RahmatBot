@@ -1,4 +1,4 @@
-import { getProducts, getCart, findProduct, findVariant } from './store.js';
+import { getProducts, getCart, findProduct, findVariant, soldCount } from './store.js';
 import { jidToNumber } from './lids.js';
 import { rupiah } from '../config.js';
 
@@ -189,7 +189,20 @@ export function productQtyList(p) {
   for (let i = 1; i <= max; i++) {
     rows.push({ title: `${i}`, rowId: `beli ${p.id} ${i}`, description: `Beli ${i} item` });
   }
-  const text = `📌 *${p.name.toUpperCase()}*\n\n> Harga : ${rupiah(p.price)}\n> Stok  : ${p.stock?.length ?? 0}\n> Deskripsi :\n${p.desc || 'Tidak ada deskripsi.'}\n\nPilih jumlah pembelian di bawah ini`;
+  const sold = soldCount(p.id);
+  const desc = (p.desc || '').trim() || 'Tidak ada deskripsi.';
+  const text = `╭──────────────
+┊・Produk : ${p.name}
+┊・Stok Terjual : ${sold}
+╰──────────────
+
+${desc}
+
+━━━━━━━━━━━━━━━━━━
+💰 Harga : ${rupiah(p.price)}
+📦 Stok  : ${p.stock?.length ?? 0}
+
+Pilih jumlah pembelian di bawah ini`;
   return {
     text,
     buttonText: 'Pilih Jumlah',
@@ -202,13 +215,24 @@ export function productQtyList(p) {
 export function productDetailText(id) {
   const p = findProduct(id);
   if (!p) return `❌ Produk ${id} tidak ditemukan. Ketik *katalog* untuk lihat daftar.`;
+  const ready = (p.stock?.length ?? 0) > 0;
+  const sold = soldCount(p.id);
+  const desc = (p.desc || '').trim() || 'Tidak ada deskripsi.';
   return (
-`📦 *${p.name}* (${p.id})
-💰 Harga: *${rupiah(p.price)}*
-📝 ${p.desc || '-'}
-📊 Stok digital: ${(p.stock?.length ?? 0) > 0 ? 'tersedia ✅' : 'kosong, tanya admin ⚠️'}
+`╭──────────────
+┊・Produk : ${p.name}
+┊・Stok Terjual : ${sold}
+╰──────────────
+
+${desc}
+
+━━━━━━━━━━━━━━━━━━
+🔖 ID Produk : *${p.id}*
+💰 Harga     : *${rupiah(p.price)}*
+📦 Stok      : ${ready ? 'tersedia ✅' : 'kosong, tanya admin ⚠️'}
 
 Ketik: *beli ${p.id}* atau *beli ${p.id} 2* untuk jumlah 2.
+${p.variants?.length ? 'Variasi: *beli ' + p.id + ' <nama variasi> <jumlah>*' : ''}
 Ketik *katalog* untuk kembali.`);
 }
 
