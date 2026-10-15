@@ -133,55 +133,16 @@ export function catalogList() {
 export function catalogText() {
   const ps = getProducts().filter(p => p.active !== false);
   if (!ps.length) return '📭 Katalog masih kosong. Coba lagi nanti ya.';
-  let t = `🛍️ *KATALOG PRODUK DIGITAL*\nKlik list di atas atau ketik ID-nya (contoh: *detail P01*):\n`;
+  let t = `🛍️ *KATALOG PRODUK DIGITAL*\nKlik list di atas atau ketik *detail P01* untuk lihat daftar lengkap:\n`;
   for (const p of ps) {
+    const sold = soldCount(p.id);
     const stok = (p.stock?.length ?? 0) > 0 ? `✅ ready (${p.stock.length})` : '⚠️ stok menipis';
-    t += `\n*${p.id}* — ${p.name}\n   ${rupiah(p.price)} • ${stok}\n   ${p.desc || ''}`;
+    t += `\n╭──────────────\n┊・Produk : ${p.name}\n┊・Stok Terjual : ${sold}\n╰──────────────`;
+    if (p.desc) t += `\n${p.desc}`;
+    t += `\n💰 ${rupiah(p.price)} • 📦 ${stok}\n🔖 ID: *${p.id}*`;
   }
   return t;
 }
-
-// Detail produk + LIST pilih jumlah (persis SC: rowId "beli P01 2")
-export function productVariantList(p) {
-  const rows = (p.variants || []).map((v, i) => ({
-    title: `${i + 1}. ${v.name}`.slice(0, 24),
-    rowId: `varian ${p.id} ${v.name}`,
-    description: `${rupiah(v.price)} | stok ${v.stock?.length ?? 0}`.slice(0, 70),
-  }));
-  const text = `Pilih variasi ${p.name} yang ingin dibeli.`;
-  return {
-    text,
-    buttonText: 'Pilih Variasi',
-    footer: 'Ketik: varian ' + p.id + ' <nama>',
-    sections: [{ title: `Variasi ${p.name}`, rows }],
-    fallback: text + '\n' + (p.variants || []).map(v => `${v.name}: ${rupiah(v.price)} (stok ${v.stock?.length ?? 0})`).join('\n') + `\n\nKetik: varian ${p.id} <nama variasi>`,
-  };
-}
-
-export function productQtyVariantList(p, variantName) {
-  const v = findVariant(p, variantName);
-  if (!v) return productVariantList(p);
-  const max = Math.min(Math.max(v.stock?.length ?? 1, 1), 10);
-  const rows = [];
-  for (let i = 1; i <= max; i++) {
-    rows.push({ title: `${i}`, rowId: `beli ${p.id} ${v.name} ${i}`, description: `Beli ${i} item ${v.name}` });
-  }
-  const text = `📌 *${p.name} × ${v.name}*
-
-> Harga : ${rupiah(v.price)}
-> Stok  : ${v.stock?.length ?? 0}
-${p.desc ? `\n${p.desc}` : ''}
-
-Pilih jumlah pembelian di bawah ini`;
-  return {
-    text,
-    buttonText: 'Pilih Jumlah',
-    footer: 'Klik tombol di bawah',
-    sections: [{ title: `Jumlah ${v.name}`, rows }],
-    fallback: `Ketik: beli ${p.id} ${v.name} <jumlah>`,
-  };
-}
-
 
 export function productQtyList(p) {
   const max = Math.min(Math.max(p.stock?.length ?? 1, 1), 10);

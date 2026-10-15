@@ -153,11 +153,13 @@ Lihat detail dengan ketik *${p}detail <ID>* (cth: *${p}detail P01*).
 
   ps.forEach((prod, i) => {
     const ready = (prod.stock?.length ?? 0) > 0;
+    const sold = soldCount(prod.id);
     t +=
-`\n
-*${i + 1}. ${prod.name}*
-   💰 *${rupiah(prod.price)}*
-   📦 ${stockBadge(prod)}
+`\n╭──────────────
+┊・${i + 1}. ${prod.name}
+┊・Stok Terjual : ${sold}
+╰──────────────
+   💰 *${rupiah(prod.price)}* • 📦 ${stockBadge(prod)}
    🔖 ID: *${prod.id}*${ready ? `  ➜ ketik *${p}detail ${prod.id}*` : ''}`;
   });
 
